@@ -1,0 +1,2060 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AD Santos — A Pioneira · Assembleia de Deus Ministério de Santos</title>
+<meta name="description" content="Igreja Evangélica Assembleia de Deus — Ministério de Santos. A primeira Assembleia de Deus do Estado de São Paulo, fundada em 5 de maio de 1924 pelo missionário Daniel Berg. Cem anos de fé e missão.">
+<meta name="theme-color" content="#070a16">
+<meta property="og:title" content="AD Santos — A Pioneira · Assembleia de Deus Ministério de Santos">
+<meta property="og:description" content="A primeira Assembleia de Deus do Estado de São Paulo. 1924–2024: cem anos de fé e missão.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/base.css">
+<style>
+/* ==========================================================================
+   Cena 3D (templo procedural da Pioneira)
+   ========================================================================== */
+#scene{position:fixed;inset:0;z-index:0;display:block}
+#scene canvas{display:block;width:100%;height:100%}
+#scene::after{ /* scrim cinematográfico para o texto respirar */
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 70% 8%,rgba(255,220,150,.10),transparent 55%),
+    linear-gradient(180deg,rgba(4,6,14,.55) 0%,rgba(4,6,14,0) 22%,rgba(4,6,14,0) 58%,rgba(4,6,14,.82) 100%);
+}
+main{position:relative;z-index:2;pointer-events:none}
+main .panel{pointer-events:auto}
+main .wrap>.rv{pointer-events:none}
+
+/* ---------------------------------------------------------------- HERO */
+.hero{min-height:100svh;display:flex;align-items:center;padding:120px 0 90px;position:relative}
+.hero .wrap{position:relative}
+.hero__eyebrow{margin-bottom:16px}
+.hero h1{max-width:16ch;text-shadow:0 6px 40px rgba(0,0,0,.7)}
+.hero h1 .ln{display:block;opacity:0;transform:translateY(26px);animation:heroIn .85s cubic-bezier(.2,.8,.2,1) forwards}
+.hero h1 .ln:nth-child(2){animation-delay:.12s}
+.hero h1 .ln:nth-child(3){animation-delay:.24s}
+@keyframes heroIn{to{opacity:1;transform:none}}
+.hero__sub{max-width:56ch;margin:20px 0 0;font-size:clamp(15px,1.7vw,19px);color:#eae4d6;
+  text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.hero__badge{display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;
+  padding:8px 16px 8px 10px;border-radius:999px;background:rgba(9,12,28,.85);
+  border:1px solid rgba(233,181,74,.4);backdrop-filter:blur(10px)}
+.hero__badge b{font-family:var(--f-display);font-size:19px;color:#0b0f22;
+  background:linear-gradient(150deg,var(--gold2),var(--gold));border-radius:999px;padding:3px 11px;line-height:1.4}
+.hero__badge span{font-size:12.5px;font-weight:600;letter-spacing:.05em;color:#efe9db}
+.hero__cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px;pointer-events:auto}
+.hero__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:44px;pointer-events:auto}
+@media (max-width:760px){.hero__stats{grid-template-columns:repeat(2,1fr)}}
+.stat{padding:16px 14px;border-radius:var(--r);background:rgba(9,12,28,.88);
+  border:1px solid var(--line-soft);backdrop-filter:blur(12px);
+  box-shadow:0 20px 50px -30px #000}
+.stat__n{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,3vw,34px);
+  color:var(--gold2);line-height:1;letter-spacing:-.02em}
+.stat__l{font-size:12.5px;font-weight:700;margin-top:6px}
+.stat__t{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3}
+
+/* contagem para o próximo culto */
+.countdown{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;pointer-events:auto}
+.cd{min-width:78px;padding:12px 14px;border-radius:14px;text-align:center;
+  background:rgba(9,12,28,.9);border:1px solid rgba(233,181,74,.32);backdrop-filter:blur(12px)}
+.cd b{display:block;font-family:var(--f-display);font-size:clamp(22px,3.4vw,32px);color:var(--gold2);line-height:1}
+.cd span{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cd--live{border-color:rgba(233,181,74,.6);background:linear-gradient(150deg,rgba(233,181,74,.2),rgba(9,12,28,.9))}
+.cd--live b{color:#fff}
+
+/* ---------------------------------------------------------------- seções */
+.sec{padding:clamp(60px,9vw,120px) 0;position:relative}
+.sec__head{max-width:62ch;margin-bottom:34px}
+.sec__head h2{margin:14px 0 12px}
+.sec--glass{padding:0}
+.sec--glass .panel{margin-block:clamp(50px,8vw,96px)}
+
+/* ---------------------------------------------------------------- LINHA DO TEMPO (interativa + mapa) */
+.tl__rail{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 14px;margin-bottom:22px;
+  scrollbar-width:thin;scrollbar-color:rgba(233,181,74,.5) transparent}
+.tl__rail::-webkit-scrollbar{height:6px}
+.tl__rail::-webkit-scrollbar-thumb{background:rgba(233,181,74,.5);border-radius:999px}
+.tl__btn{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:10px 16px;border-radius:12px;border:1px solid var(--line-soft);
+  background:var(--card);transition:.22s;min-width:118px}
+.tl__btn b{font-family:var(--f-display);font-size:19px;color:var(--gold2);line-height:1.1}
+.tl__btn span{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.tl__btn:hover{background:var(--card-hover);border-color:rgba(233,181,74,.35);transform:translateY(-2px)}
+.tl__btn[aria-selected="true"]{background:linear-gradient(150deg,var(--gold2),var(--gold));
+  border-color:transparent;box-shadow:0 14px 34px -16px rgba(233,181,74,.9)}
+.tl__btn[aria-selected="true"] b{color:#0b0f22}
+.tl__btn[aria-selected="true"] span{color:#3a2f10}
+.tl__grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media (max-width:900px){.tl__grid{grid-template-columns:1fr}}
+.tl__card{border-radius:var(--r);overflow:hidden;border:1px solid var(--line-soft);
+  background:var(--card);position:relative}
+.tl__card .foto{border-radius:0;aspect-ratio:16/9;border:0;border-bottom:1px solid var(--line-soft)}
+.tl__card__b{padding:20px}
+.tl__ano{display:inline-block;font-family:var(--f-display);font-size:34px;font-weight:700;
+  color:var(--gold2);line-height:1;margin-bottom:6px}
+.tl__era{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tl__card h3{margin:10px 0 10px}
+.tl__card p{color:var(--muted);font-size:14.5px;line-height:1.72}
+.tl__figs{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-soft)}
+.tl__figs b{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
+.tl__map{height:420px}
+@media (max-width:900px){.tl__map{height:320px}}
+.tl__nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+/* ---------------------------------------------------------------- galeria */
+.gal{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.gal .foto{aspect-ratio:4/3}
+.gal .foto:nth-child(1){grid-column:span 2;grid-row:span 2;aspect-ratio:1/1}
+@media (max-width:760px){.gal{grid-template-columns:repeat(2,1fr)}.gal .foto:nth-child(1){grid-column:span 2;aspect-ratio:16/10;grid-row:auto}}
+
+/* ---------------------------------------------------------------- líderes */
+.lid{display:flex;gap:16px;align-items:flex-start}
+.lid__av{width:60px;height:60px;flex:none;border-radius:16px;display:grid;place-items:center;
+  font-family:var(--f-display);font-weight:700;font-size:22px;color:#0b0f22;
+  background:linear-gradient(150deg,var(--gold2),var(--gold));box-shadow:0 10px 26px -12px rgba(233,181,74,.8)}
+.lid__tx{min-width:0}
+.lid__cargo{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold2)}
+.lid__nome{font-family:var(--f-display);font-weight:700;font-size:17px;margin:2px 0 4px}
+.lid__bio{font-size:13.8px;color:var(--muted);line-height:1.6}
+.lid__tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.lid__tags .chip{font-size:11.5px;padding:4px 10px}
+.suc{display:grid;gap:8px}
+.suc__r{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:baseline;
+  padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--line-soft)}
+.suc__r:hover{background:rgba(255,255,255,.06);border-color:rgba(233,181,74,.3)}
+.suc__ano{font-family:var(--f-display);font-weight:700;color:var(--gold2);font-size:15px}
+.suc__nome{font-weight:700;font-size:14.5px}
+.suc__nota{font-size:12.5px;color:var(--muted);margin-top:1px}
+
+/* ---------------------------------------------------------------- cultos */
+.culto{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+  background:var(--card);border:1px solid var(--line-soft);transition:.2s}
+.culto:hover{background:var(--card-hover);border-color:rgba(233,181,74,.35);transform:translateX(3px)}
+.culto__ico{width:40px;height:40px;flex:none;border-radius:11px;display:grid;place-items:center;
+  color:var(--gold2);background:rgba(233,181,74,.13);border:1px solid rgba(233,181,74,.28)}
+.culto__hora{font-family:var(--f-display);font-weight:700;font-size:17px;color:var(--gold2);
+  min-width:60px;text-align:center}
+.culto__tx{flex:1;min-width:0}
+.culto__nome{font-weight:700;font-size:14.8px}
+.culto__sala{font-size:12.5px;color:var(--muted)}
+.culto__dia{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted2);min-width:76px;text-align:right}
+.dias{display:grid;gap:18px}
+.dia__h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dia__h b{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2)}
+.dia__h i{flex:1;height:1px;background:var(--line-soft)}
+.dia__ls{display:grid;gap:8px}
+
+/* ---------------------------------------------------------------- VISITE-NOS (mapa) */
+.vis{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+@media (max-width:900px){.vis{grid-template-columns:1fr}}
+.vis__map{height:500px}
+@media (max-width:900px){.vis__map{height:340px}}
+.vis__lista{display:grid;gap:8px;max-height:230px;overflow-y:auto;padding-right:4px}
+.vis__lista::-webkit-scrollbar{width:6px}
+.vis__lista::-webkit-scrollbar-thumb{background:rgba(233,181,74,.4);border-radius:999px}
+.vit{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;
+  background:var(--card);border:1px solid var(--line-soft);cursor:pointer;transition:.2s;text-align:left;width:100%}
+.vit:hover{background:var(--card-hover);border-color:rgba(233,181,74,.4)}
+.vit.is-on{background:linear-gradient(150deg,rgba(233,181,74,.2),rgba(16,21,42,.95));
+  border-color:var(--gold)}
+.vit__dot{width:11px;height:11px;border-radius:50%;flex:none;background:var(--gold);box-shadow:0 0 0 4px rgba(233,181,74,.18)}
+.vit--sede .vit__dot{background:var(--gold2);box-shadow:0 0 0 5px rgba(233,181,74,.28)}
+.vit__nome{font-weight:700;font-size:14.5px}
+.vit__cid{font-size:12px;color:var(--muted)}
+.vit__tag{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.1em;
+  padding:3px 8px;border-radius:999px;background:rgba(233,181,74,.16);color:var(--gold2);text-transform:uppercase}
+
+/* painel de contato do igreja selecionada */
+.vis__painel{border-radius:var(--r);border:1px solid rgba(233,181,74,.35);
+  background:linear-gradient(158deg,rgba(20,26,54,.96),rgba(9,12,26,.96));padding:22px;
+  box-shadow:0 30px 70px -40px #000}
+.vis__painel h3{margin-bottom:4px}
+.vis__painel .badge{margin-bottom:12px}
+.vis__desc{color:var(--muted);font-size:14px;line-height:1.68;margin:10px 0 0}
+.vis__cta{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.vis__cta .btn{font-size:13px;padding:9px 16px}
+.anim-fade{animation:fadeSwap .38s ease}
+@keyframes fadeSwap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------------------------------------------------------------- eventos */
+.evt{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:12px;
+  background:var(--card);border:1px solid var(--line-soft);transition:.2s}
+.evt:hover{background:var(--card-hover);border-color:rgba(233,181,74,.4);transform:translateY(-3px)}
+.evt--d{flex:none;width:58px;text-align:center;padding:10px 6px;border-radius:12px;
+  background:rgba(233,181,74,.13);border:1px solid rgba(233,181,74,.3)}
+.evt__d{font-family:var(--f-display);font-weight:700;font-size:24px;color:var(--gold2);line-height:1}
+.evt__m{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.evt__t{font-weight:700;font-size:15.5px;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+.evt__s{font-size:13.3px;color:var(--muted);line-height:1.6}
+
+/* ---------------------------------------------------------------- social */
+.ob{display:flex;gap:16px;align-items:flex-start;padding:18px;border-radius:var(--r);
+  background:var(--card);border:1px solid var(--line-soft);transition:.25s}
+.ob:hover{background:var(--card-hover);border-color:rgba(111,208,140,.4);transform:translateY(-3px)}
+.ob__ico{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;
+  color:#9ff0b6;background:rgba(111,208,140,.13);border:1px solid rgba(111,208,140,.3)}
+.ob h3{font-size:16px;margin-bottom:6px}
+.ob p{font-size:13.6px;color:var(--muted);margin:0;line-height:1.6}
+
+/* ---------------------------------------------------------------- vozes */
+.voz{padding:22px;border-radius:var(--r);background:var(--card);border:1px solid var(--line-soft);
+  position:relative;transition:.25s}
+.voz:hover{transform:translateY(-3px);border-color:rgba(233,181,74,.4)}
+.voz::before{content:'“';position:absolute;top:2px;left:16px;font-family:var(--f-serif);
+  font-size:64px;line-height:1;opacity:.32}
+.voz p{font-family:var(--f-serif);font-style:italic;font-size:14.6px;line-height:1.72;
+  margin:0 0 12px;padding-top:14px;color:#e9e3d5}
+.voz b{font-size:13px;display:block}
+.voz span{font-size:12px;color:var(--muted)}
+.vsl{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:12px;
+  background:rgba(233,181,74,.07);border:1px solid rgba(233,181,74,.22)}
+.vsl b{font-family:var(--f-serif);font-style:italic;font-size:14.5px;line-height:1.66;color:#eee7d7}
+.vsl i{font-size:11.5px;font-style:normal;color:var(--gold2);font-weight:700;
+  letter-spacing:.06em;white-space:nowrap;padding-top:2px}
+
+/* ---------------------------------------------------------------- visita/PIX */
+.pix{border-radius:var(--r);padding:22px;background:linear-gradient(150deg,rgba(233,181,74,.14),rgba(16,21,42,.9));
+  border:1px solid rgba(233,181,74,.4)}
+.pix__k{display:flex;align-items:center;gap:10px;margin:12px 0;padding:12px 14px;border-radius:10px;
+  background:rgba(4,6,14,.6);border:1px dashed rgba(233,181,74,.4);font-family:var(--f-display);
+  font-size:15px;letter-spacing:.02em;word-break:break-all}
+.pix__k svg{flex:none;color:var(--gold2)}
+
+/* ---------------------------------------------------------------- tour / paleta / seta */
+.fab{position:fixed;z-index:34;display:grid;place-items:center;border-radius:50%;
+  background:rgba(11,15,32,.92);border:1px solid var(--line);color:var(--ink);
+  box-shadow:0 18px 44px -20px #000;backdrop-filter:blur(12px);transition:.22s}
+.fab:hover{transform:scale(1.08);border-color:rgba(233,181,74,.5);color:var(--gold2)}
+#tourBtn{right:20px;bottom:22px;width:56px;height:56px}
+#tourBtn .ic{color:#0b0f22;background:linear-gradient(150deg,var(--gold2),var(--gold));
+  border-radius:50%;width:56px;height:56px;display:grid;place-items:center}
+#tourBtn.is-on .ic{background:linear-gradient(150deg,#ff9d9d,#d8434b);color:#fff}
+.pal{position:fixed;left:16px;bottom:22px;z-index:34;display:flex;gap:7px;align-items:center;
+  padding:8px;border-radius:999px;background:rgba(11,15,32,.92);border:1px solid var(--line);
+  box-shadow:0 18px 44px -20px #000;backdrop-filter:blur(12px)}
+.pal b{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:0 6px 0 4px}
+.pal button{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.22);transition:.2s}
+.pal button:hover{transform:scale(1.22)}
+.pal button[aria-pressed="true"]{box-shadow:0 0 0 3px rgba(255,255,255,.35);border-color:#fff}
+@media (max-width:720px){.pal{bottom:132px}.pal b{display:none}}
+.cue{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:30;
+  display:grid;justify-items:center;gap:6px;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);transition:opacity .4s;pointer-events:none}
+.cue i{width:1px;height:34px;background:linear-gradient(180deg,var(--gold),transparent);
+  animation:cueDrop 1.9s ease-in-out infinite}
+@keyframes cueDrop{0%,100%{transform:scaleY(.4);opacity:.4;transform-origin:top}50%{transform:scaleY(1);opacity:1;transform-origin:top}}
+
+/* loader */
+.loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;gap:18px;
+  background:radial-gradient(80% 60% at 50% 40%,#141d3d,#05070f);transition:opacity .8s,visibility .8s}
+.loader.is-off{opacity:0;visibility:hidden}
+.loader__x{width:76px;height:76px;display:grid;place-items:center;color:var(--gold);
+  filter:drop-shadow(0 0 20px rgba(233,181,74,.7));animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+.loader__t{font-family:var(--f-serif);letter-spacing:.28em;text-transform:uppercase;
+  font-size:12px;color:#cbb98a}
+
+/* botão voltar ao topo */
+.voltar{position:fixed;right:20px;bottom:92px;z-index:33;width:44px;height:44px;
+  border-radius:50%;display:grid;place-items:center;background:rgba(11,15,32,.92);
+  border:1px solid var(--line);color:var(--muted);opacity:0;visibility:hidden;
+  transition:.25s;box-shadow:0 14px 34px -18px #000}
+.voltar.is-on{opacity:1;visibility:visible}
+.voltar:hover{color:var(--gold2);border-color:rgba(233,181,74,.5);transform:translateY(-3px)}
+@media (max-width:720px){#tourBtn{right:12px;bottom:16px}.voltar{right:12px;bottom:86px}}
+
+/* sem WebGL */
+.no3d #scene{display:none}
+.no3d body{background:radial-gradient(80% 60% at 50% 0%,#141d3d,#05070f)}
+.wgl-msg{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:45;
+  padding:9px 16px;border-radius:999px;background:rgba(11,15,32,.94);border:1px solid rgba(233,181,74,.4);
+  font-size:12.5px;color:var(--muted);display:none}
+.no3d .wgl-msg{display:block}
+</style>
+</head>
+<body>
+
+<!-- loader -->
+<div class="loader" id="loader">
+  <div class="loader__x" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="66" height="66" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+      <path d="M12 2v20M6 7h12M9 12h6M10 16h4"/>
+    </svg>
+  </div>
+  <div class="loader__t">Carregando a maquete…</div>
+</div>
+
+<!-- cena 3D -->
+<div id="scene" aria-hidden="true"></div>
+<div class="wgl-msg">Seu navegador não suporta WebGL — mostrando o modo estático.</div>
+
+<!-- ---------------------------------------------------------------- header -->
+<header class="topo" id="topo">
+  <a class="marca" href="#inicio">
+    <span class="marca__ico" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M6 7h12M9 12h6M10 16h4"/></svg>
+    </span>
+    <span class="marca__tx">
+      <span class="marca__nome">AD Santos</span>
+      <span class="marca__sub">A Pioneira · desde 1924</span>
+    </span>
+  </a>
+  <nav class="nav" id="nav" aria-label="Seções">
+    <a href="#inicio">Início</a>
+    <a href="#historia">Trajetória</a>
+    <a href="#crenca">Crença</a>
+    <a href="#lideres">Líderes</a>
+    <a href="#cultos">Cultos</a>
+    <a href="#igrejas">Visite-nos</a>
+    <a href="#eventos">Eventos</a>
+    <a href="#vozes">Vozes</a>
+    <a href="igrejas.html">Nossas Igrejas</a>
+  </nav>
+  <a class="btn btn--gold btn--sm" href="#visite" id="topoCta">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Dízimo &amp; Oferta
+  </a>
+  <button class="menu-btn" id="menuBtn" aria-label="Abrir menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</header>
+<div class="drawer" id="drawer">
+  <a href="#inicio">Início</a><a href="#historia">Trajetória</a><a href="#crenca">Crença</a>
+  <a href="#lideres">Líderes</a><a href="#cultos">Cultos</a><a href="#igrejas">Visite-nos</a>
+  <a href="#eventos">Eventos</a><a href="#vozes">Vozes</a>
+  <a href="igrejas.html">Nossas Igrejas</a>
+</div>
+
+<main>
+
+  <!-- ============================================================ HERO -->
+  <section class="hero" id="inicio">
+    <div class="wrap">
+      <div class="hero__badge">
+        <b>1924</b><span>A primeira Assembleia de Deus do Estado de São Paulo</span>
+      </div>
+      <div class="eyebrow hero__eyebrow">Igreja Evangélica Assembleia de Deus · Ministério de Santos</div>
+      <h1>
+        <span class="ln">Cem anos de fé</span>
+        <span class="ln">que desembarcou</span>
+        <span class="ln grad">no Porto de Santos.</span>
+      </h1>
+      <p class="hero__sub" id="heroSub">
+        Em 5 de maio de 1924, o missionário sueco <b>Daniel Berg</b> plantou a primeira
+        Assembleia de Deus do Estado de São Paulo. De um culto no bairro Ponta da Praia
+        nasceu <b>A Pioneira</b> — mãe de todo o pentecostalismo paulista.
+      </p>
+      <div class="hero__cta">
+        <button class="btn btn--gold" id="explorarBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l2.9 6.3 6.8.9-5 4.7 1.3 6.8L12 17.6 5.9 20.7 7.2 13.9 2.2 9.2 9 8.3z"/></svg>
+          Explorar a maquete
+        </button>
+        <a class="btn" href="igrejas.html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          Nossas Igrejas &amp; Congregações
+        </a>
+      </div>
+      <div class="countdown" id="countdown" aria-live="polite"></div>
+      <div class="hero__stats" id="heroStats"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ TRAJETÓRIA (linha do tempo + mapa) -->
+  <section class="sec sec--glass" id="historia">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Nossa trajetória</div>
+          <h2>De uma casa no Ponta da Praia<br>a <span class="grad">cim</span> anos de história</h2>
+          <p class="lead">Navegue pelos marcos da obra — e veja no <b>mapa ao vivo</b> como a
+            pregação foi conquistando o litoral, bairro por bairro, cidade por cidade.</p>
+        </div>
+
+        <!-- trilho de botões/épocas -->
+        <div class="tl__rail" id="tlRail" role="tablist" aria-label="Épocas da história"></div>
+
+        <div class="tl__grid">
+          <!-- cartão do marco selecionado -->
+          <article class="tl__card" id="tlCard" role="tabpanel" aria-live="polite"></article>
+
+          <!-- mapa dinâmico da expansão -->
+          <div>
+            <div class="adms-mapa tl__map" id="tlMap" role="img"
+                 aria-label="Mapa da expansão da Assembleia de Deus pelo litoral paulista"></div>
+            <div class="tl__nav">
+              <button class="btn btn--sm" id="tlPrev">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+                Anterior
+              </button>
+              <button class="btn btn--sm" id="tlNext">
+                Próximo
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+              <button class="btn btn--sm btn--ghost" id="tlPlay">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4.5v15l12-7.5z"/></svg>
+                Reproduzir
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- galeria histórica -->
+        <div style="margin-top:26px">
+          <div class="eyebrow" style="margin-bottom:14px">Acervo &amp; registros</div>
+          <div class="gal" id="gal"></div>
+          <p class="muted" style="font-size:11.5px;margin-top:10px" id="credFotos"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ CRENÇA -->
+  <section class="sec sec--glass" id="crenca">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">O que cremos</div>
+          <h2>Nossas crenças</h2>
+          <p class="lead">Doutrina clássica pentecostal, herdada das Missões Suecas e da
+            Associação de Obreiros Cristãos — a mesma fé praticada desde 1924.</p>
+        </div>
+        <div class="acc" id="crencasAcc"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ MISSÃO / MINISTÉRIOS -->
+  <section class="sec sec--glass" id="missao">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Ministérios</div>
+          <h2>Cada dom, um lugar na obra</h2>
+          <p class="lead">Da adoração às missões, do púlpito à ação social: os ministérios da
+            Pioneira servem a cidade inteira — não só o templo.</p>
+        </div>
+        <div class="grid g3" id="minGrid"></div>
+
+        <div class="grid g2" style="margin-top:28px">
+          <div>
+            <div class="eyebrow" style="margin-bottom:12px">Ação social &amp; missões</div>
+            <div class="grid" id="socialGrid" style="gap:12px"></div>
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom:12px">Reconhecimento oficial</div>
+            <div class="panel panel--tight" style="background:linear-gradient(150deg,rgba(233,181,74,.14),rgba(16,21,42,.9))">
+              <h3 style="margin-bottom:8px">Lei 16.067/2015 — “Dia da Pioneira”</h3>
+              <p class="muted" style="font-size:14px;line-height:1.7">
+                A Lei estadual 16.067, de 2015, incluiu o <b>5 de maio</b> — data da fundação —
+                no <b>Calendário Oficial do Estado de São Paulo</b>. O diploma reconhece a
+                história, a missão evangelística e a expressiva atuação da igreja em
+                <b>saúde</b> e <b>assistência social</b>, conquistado na gestão do
+                <b>Deputado e Pastor Paulo Corrêa Jr</b>.
+              </p>
+              <div class="chips" style="margin-top:14px">
+                <span class="chip">Dia da Pioneira · 5 de maio</span>
+                <span class="chip">Calendário Oficial de SP</span>
+              </div>
+            </div>
+            <div class="panel panel--tight" style="margin-top:12px;background:linear-gradient(150deg,rgba(92,200,255,.12),rgba(16,21,42,.9))">
+              <h3 style="margin-bottom:8px">Missões pelo litoral</h3>
+              <p class="muted" style="font-size:14px;line-height:1.7">
+                De uma casa no Ponta da Praia a uma rede de congregações por
+                <b>Santos, São Vicente, Praia Grande, Guarujá, Mongaguá, Itanhaém</b> e o
+                <b>Litoral Norte</b> — São Sebastião, Caraguatatuba e Ubatuba. Cada nova casa
+                de pregação é filha direta da Pioneira.
+              </p>
+              <a class="btn btn--sm" style="margin-top:14px" href="igrejas.html">
+                Ver todas as igrejas no mapa
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ LÍDERES -->
+  <section class="sec sec--glass" id="lideres">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Nossos líderes</div>
+          <h2>Quem conduz a obra</h2>
+          <p class="lead">Uma sucessão presidencial que atravessa quase um século — do missionário
+            Daniel Berg ao Pastor Dr. Paulo Alves Corrêa.</p>
+        </div>
+        <div class="grid g3" id="lidGrid" style="margin-bottom:26px"></div>
+        <div class="eyebrow" style="margin-bottom:12px">Sucessão presidencial · 1924 → hoje</div>
+        <div class="suc" id="sucList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ CULTOS -->
+  <section class="sec sec--glass" id="cultos">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Programação</div>
+          <h2>Cultos da semana</h2>
+          <p class="lead">Você é bem-vindo em todas as casas da Pioneira. Confira abaixo a
+            programação da sede e acompanhe a <b>Fly 99 FM 99.1</b> — a rádio que toca no seu coração.</p>
+        </div>
+        <div class="dias" id="cultosGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ VISITE-NOS (mapa) -->
+  <section class="sec sec--glass" id="igrejas">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Visite-nos</div>
+          <h2>Escolha uma igreja no mapa</h2>
+          <p class="lead">Clique num ponto do mapa ou na lista ao lado — o
+            <b>endereço, telefone, WhatsApp e e-mail</b> mudam na hora. Para o perfil completo
+            de cada congregação, acesse <a class="gold" href="igrejas.html"><b>Nossas Igrejas</b></a>.</p>
+        </div>
+        <div class="vis">
+          <div>
+            <div class="adms-mapa vis__map" id="visMap" role="img"
+                 aria-label="Mapa das igrejas e congregações da Baixada Santista"></div>
+          </div>
+          <div>
+            <div class="vis__lista" id="visLista" role="listbox" aria-label="Lista de igrejas"></div>
+            <div class="vis__painel" id="visPainel" style="margin-top:14px" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ EVENTOS -->
+  <section class="sec sec--glass" id="eventos">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Agenda</div>
+          <h2>Próximos eventos</h2>
+          <p class="lead">Datas que movem a casa — do Dia da Pioneira às convenções que reúnem
+            o litoral inteiro.</p>
+        </div>
+        <div class="grid g2" id="evtGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ VOZES -->
+  <section class="sec sec--glass" id="vozes">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Vozes da Pioneira</div>
+          <h2>Quem vive a obra, conta</h2>
+        </div>
+        <div class="grid g2" id="vozGrid" style="margin-bottom:22px"></div>
+        <div class="eyebrow" style="margin-bottom:12px">Versículos que nos movem</div>
+        <div class="grid" id="vslGrid" style="gap:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ VISITE / DÍZIMO -->
+  <section class="sec sec--glass" id="visite">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">Visite-nos</div>
+          <h2>Venha orar conosco</h2>
+          <p class="lead">A sede da Rua Dr. Manoel Tourinho, 351, abre as portas para toda a
+            cidade. Traga sua família — há lugar para você.</p>
+        </div>
+        <div class="vis">
+          <div>
+            <div class="eyebrow" style="margin-bottom:12px">Endereço &amp; contatos</div>
+            <div class="ct" id="contatoSede"></div>
+            <div class="vis__cta" style="margin-top:20px">
+              <a class="btn btn--gold" id="btnWaze" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                Como chegar
+              </a>
+              <a class="btn" id="btnZap" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg>
+                Falar no WhatsApp
+              </a>
+              <a class="btn" id="btnMail" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                Enviar e-mail
+              </a>
+            </div>
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom:12px">Dízimos &amp; ofertas</div>
+            <div class="pix">
+              <p class="muted" style="font-size:13.5px;margin:0 0 4px">Faça sua oferta por <b>PIX</b> —
+                o valor chega integralmente à obra:</p>
+              <div class="pix__k" id="pixKey">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M13 3h8v4M3 13v8h4"/></svg>
+                <span id="pixVal">—</span>
+              </div>
+              <button class="btn btn--gold" id="btnPix" style="width:100%;justify-content:center">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 12l3 3 2-2 3 3"/><path d="M3 10l4-4 4 2 2-1 2 1 4-2 4 4"/><path d="M3 10v4l6 5M21 10v4l-5 4"/></svg>
+                Copiar chave PIX
+              </button>
+            </div>
+            <div class="panel panel--tight" style="margin-top:12px;background:linear-gradient(150deg,rgba(216,67,75,.12),rgba(16,21,42,.9))">
+              <h3 style="margin-bottom:6px;font-size:16px">Redes sociais</h3>
+              <p class="muted" style="font-size:13.5px;margin:0 0 12px">Acompanhe a Pioneira no dia a dia.</p>
+              <div class="vis__cta" style="margin-top:0">
+                <a class="btn btn--sm" id="btnIg" target="_blank" rel="noopener">Instagram</a>
+                <a class="btn btn--sm" id="btnFb" target="_blank" rel="noopener">Facebook</a>
+                <a class="btn btn--sm" id="btnYt" target="_blank" rel="noopener">YouTube</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ---------------------------------------------------------------- rodapé -->
+<footer class="rodape">
+  <div class="wrap">
+    <div class="rodape__cols">
+      <div>
+        <div class="marca" style="margin-bottom:14px">
+          <span class="marca__ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M6 7h12M9 12h6M10 16h4"/></svg>
+          </span>
+          <span class="marca__tx">
+            <span class="marca__nome">AD Santos — A Pioneira</span>
+            <span class="marca__sub">Assembleia de Deus · Ministério de Santos</span>
+          </span>
+        </div>
+        <p class="muted" style="font-size:13.5px;max-width:38ch">
+          Igreja Evangélica Assembleia de Deus — Ministério de Santos. A pioneira do
+          pentecostalismo no Estado de São Paulo, desde 5 de maio de 1924.
+        </p>
+        <div class="aviso" style="margin-top:14px">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+          <span>Saiba mais sobre cada igreja e congregação em
+            <a class="gold" href="igrejas.html"><b>Nossas Igrejas</b></a>.</span>
+        </div>
+      </div>
+      <div>
+        <h4>Navegue</h4>
+        <ul>
+          <li><a href="#historia">Nossa trajetória</a></li>
+          <li><a href="#crenca">Nossas crenças</a></li>
+          <li><a href="#lideres">Nossos líderes</a></li>
+          <li><a href="#cultos">Cultos</a></li>
+          <li><a href="igrejas.html">Nossas Igrejas</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contato</h4>
+        <ul id="rodapeContato"></ul>
+      </div>
+      <div>
+        <h4>Rádio &amp; redes</h4>
+        <ul id="rodapeRedes"></ul>
+      </div>
+    </div>
+    <div class="rodape__legal">
+      <span>© <span id="ano"></span> Igreja Evangélica Assembleia de Deus — Ministério de Santos.</span>
+      <span id="rodapeCred"></span>
+    </div>
+  </div>
+</footer>
+
+<!-- controles flutuantes -->
+<button class="fab" id="tourBtn" title="Tour guiado pela maquete" aria-label="Iniciar tour guiado">
+  <span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l2.9 6.3 6.8.9-5 4.7 1.3 6.8L12 17.6 5.9 20.7 7.2 13.9 2.2 9.2 9 8.3z"/></svg></span>
+</button>
+<div class="pal" id="pal" role="group" aria-label="Paleta da maquete"><b>Paleta</b></div>
+<button class="voltar" id="voltar" title="Voltar ao topo" aria-label="Voltar ao topo">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+<div class="cue" id="cue"><span>Role para adentrar o templo</span><i></i></div>
+
+<!-- ==========================================================================
+     SCRIPTS
+     ======================================================================= -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* fallback do Three.js */
+(function(){
+  if(window.THREE) return;
+  var s=document.createElement('script');
+  s.src='https://unpkg.com/three@0.128.0/build/three.min.js';
+  s.onload=function(){window.dispatchEvent(new Event('three-ready'));};
+  s.onerror=function(){document.documentElement.classList.add('no3d');window.dispatchEvent(new Event('three-fail'));};
+  document.head.appendChild(s);
+})();
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/shared.js"></script>
+
+<script>
+/* ==========================================================================
+   APP — interface + cena 3D
+   ========================================================================== */
+(function(){
+'use strict';
+
+var D = window.ADMS, U = window.ADMSUI, C = D.CONFIG;
+var $  = function(s,r){return (r||document).querySelector(s);};
+var $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+
+/* ---------------------------------------------------------------- header */
+var topo = $('#topo'), voltar = $('#voltar'), cue = $('#cue');
+function onScroll(){
+  var y = window.scrollY || 0;
+  topo.classList.toggle('is-solid', y > 40);
+  voltar.classList.toggle('is-on', y > 600);
+  if(cue) cue.style.opacity = y > 120 ? 0 : 1;
+}
+window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+voltar.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+
+/* menu mobile */
+var menuBtn = $('#menuBtn'), drawer = $('#drawer');
+menuBtn.addEventListener('click', function(){
+  var open = drawer.classList.toggle('is-open');
+  menuBtn.setAttribute('aria-expanded', open ? 'true':'false');
+});
+$$('#drawer a').forEach(function(a){ a.addEventListener('click', function(){
+  drawer.classList.remove('is-open'); menuBtn.setAttribute('aria-expanded','false');
+});});
+
+/* nav ativa */
+var navLinks = $$('#nav a');
+var secs = ['inicio','historia','crenca','lideres','cultos','igrejas','eventos','vozes']
+  .map(function(id){return document.getElementById(id);}).filter(Boolean);
+if('IntersectionObserver' in window){
+  var ioNav = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      navLinks.forEach(function(a){
+        a.setAttribute('aria-current', a.getAttribute('href') === '#'+e.target.id ? 'true':'false');
+      });
+    });
+  }, {rootMargin:'-45% 0px -50% 0px'});
+  secs.forEach(function(s){ ioNav.observe(s); });
+
+  /* reveal */
+  var ioRv = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); ioRv.unobserve(e.target);} });
+  }, {rootMargin:'0px 0px -12% 0px'});
+  window.__ioRv = ioRv;
+}
+function marcarReveal(el, i){
+  el.classList.add('rv');
+  el.style.transitionDelay = ((i||0)*60) + 'ms';
+  if(window.__ioRv) window.__ioRv.observe(el); else el.classList.add('in');
+}
+
+/* ---------------------------------------------------------------- HERO stats */
+(function(){
+  var w = $('#heroStats');
+  D.STATS.forEach(function(s,i){
+    var d = document.createElement('div'); d.className='stat';
+    d.innerHTML = '<div class="stat__n" data-n="'+s.n+'" data-s="'+(s.s||'')+'">0</div>'+
+                  '<div class="stat__l">'+U.esc(s.label)+'</div>'+
+                  '<div class="stat__t">'+U.esc(s.nota)+'</div>';
+    w.appendChild(d); marcarReveal(d,i);
+  });
+  // contagem quando visível
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var el = e.target, n = +el.dataset.n, sfx = el.dataset.s||'';
+      var ini = performance.now();
+      (function passo(t){
+        var p = Math.min(1,(t-ini)/1500), k = 1-Math.pow(1-p,3);
+        el.textContent = Math.round(n*k).toLocaleString('pt-BR') + sfx;
+        if(p<1) requestAnimationFrame(passo);
+      })(ini);
+      io.unobserve(el);
+    });
+  }, {threshold:.4});
+  $$('.stat__n').forEach(function(el){ io.observe(el); });
+})();
+
+/* ---------------------------------------------------------------- contagem do próximo culto */
+function proximoCulto(){
+  var agora = new Date(), melhor = null;
+  for(var i=0;i<8;i++){
+    var d = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()+i);
+    var dow = d.getDay();
+    D.CULTOS.filter(function(c){return c.dow===dow;}).forEach(function(c){
+      var p = c.hora.split(':');
+      var dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +p[0], +p[1], 0);
+      if(dt > agora && (!melhor || dt < melhor.dt)) melhor = {dt:dt, c:c};
+    });
+    if(melhor) break;
+  }
+  return melhor;
+}
+(function(){
+  var w = $('#countdown'); if(!w) return;
+  function render(){
+    var pc = proximoCulto(); if(!pc){ w.innerHTML=''; return; }
+    var dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    var diff = Math.max(0, pc.dt - new Date());
+    var s = Math.floor(diff/1000), dd = Math.floor(s/86400), hh = Math.floor(s%86400/3600),
+        mm = Math.floor(s%3600/60), ss = s%60;
+    var aoVivo = diff < 3600000;
+    w.innerHTML =
+      '<div class="cd'+(aoVivo?' cd--live':'')+'"><b>'+U.esc(pc.c.nome)+'</b><span>'+
+        dias[pc.c.dow]+' · '+pc.c.hora+'</span></div>'+
+      '<div class="cd"><b>'+String(dd).padStart(2,'0')+'</b><span>dias</span></div>'+
+      '<div class="cd"><b>'+String(hh).padStart(2,'0')+'</b><span>horas</span></div>'+
+      '<div class="cd"><b>'+String(mm).padStart(2,'0')+'</b><span>min</span></div>'+
+      '<div class="cd"><b>'+String(ss).padStart(2,'0')+'</b><span>seg</span></div>';
+  }
+  render(); setInterval(render, 1000);
+})();
+
+/* ---------------------------------------------------------------- TRAJETÓRIA (linha do tempo + mapa) */
+var tlIdx = 0, tlTimer = null;
+(function(){
+  var rail = $('#tlRail'), card = $('#tlCard');
+  var T = D.TRAJETORIA;
+
+  // botões/épocas
+  T.forEach(function(m,i){
+    var b = document.createElement('button');
+    b.className='tl__btn'; b.type='button'; b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', i===0?'true':'false');
+    b.innerHTML = '<b>'+m.ano+'</b><span>'+U.esc(m.era)+'</span>';
+    b.addEventListener('click', function(){ tlSelect(i); });
+    rail.appendChild(b);
+  });
+
+  // mapa
+  var mapa = U.criarMapa($('#tlMap'), {
+    pontos: Object.keys(D.PONTOS_MAPA).map(function(k){
+      var p = D.PONTOS_MAPA[k]; return {id:k, nome:p.nome, lat:p.lat, lng:p.lng, tipo:'historico'};
+    }),
+    center:[-23.80,-45.55], zoom:9, fit:false
+  });
+  var polyline = null;
+
+  function tlSelect(i, silencioso){
+    tlIdx = (i+T.length)%T.length;
+    var m = T[tlIdx];
+    $$('.tl__btn', rail).forEach(function(b,k){ b.setAttribute('aria-selected', k===tlIdx?'true':'false'); });
+
+    // cartão
+    card.innerHTML =
+      '<div class="foto foto--hero" id="tlFoto"></div>'+
+      '<div class="tl__card__b">'+
+        '<span class="tl__ano">'+m.ano+'</span>'+
+        '<div class="tl__era">'+U.esc(m.era)+'</div>'+
+        '<h3>'+U.esc(m.titulo)+'</h3>'+
+        '<p>'+U.esc(m.resumo)+'</p>'+
+        '<p>'+U.esc(m.texto)+'</p>'+
+        (m.detalhe?'<p class="muted" style="font-size:13.5px">'+U.esc(m.detalhe)+'</p>':'')+
+        (m.figuras&&m.figuras.length?
+          '<div class="tl__figs"><b>Figuras-chave</b><div class="chips" style="margin-top:8px">'+
+          m.figuras.map(function(f){return '<span class="chip">'+U.esc(f)+'</span>';}).join('')+'</div></div>':'')+
+      '</div>';
+    card.classList.remove('anim-fade'); void card.offsetWidth; card.classList.add('anim-fade');
+    var fw = $('#tlFoto', card);
+    fw.appendChild(U.img(m.foto, m.ano+' · '+m.era, m.legenda, '#e9b54a'));
+
+    // mapa: acende os pontos do marco atual + traça a rota a partir da sede
+    if(mapa.map){
+      Object.keys(mapa.marks).forEach(function(k){ mapa.marks[k].getElement().classList.remove('is-on'); });
+      var pts = [];
+      m.mapa.forEach(function(id){
+        var mk = mapa.marks[id];
+        if(mk){ mk.getElement().classList.add('is-on'); pts.push([D.PONTOS_MAPA[id].lat, D.PONTOS_MAPA[id].lng]); }
+      });
+      if(polyline){ mapa.map.removeLayer(polyline); polyline = null; }
+      if(pts.length>1){
+        polyline = L.polyline(pts, {color:'#e9b54a', weight:2.5, opacity:.85, dashArray:'6 8'}).addTo(mapa.map);
+      }
+      try{
+        var b = L.latLngBounds(pts.length?pts:Object.values(D.PONTOS_MAPA).map(function(p){return [p.lat,p.lng];}));
+        mapa.map.fitBounds(b.pad(0.35), {animate:true});
+      }catch(e){}
+    }
+    if(!silencioso){
+      // rola o botão ativo para a vista
+      var btn = $$('.tl__btn', rail)[tlIdx];
+      if(btn && btn.scrollIntoView) btn.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+    }
+  }
+
+  $('#tlPrev').addEventListener('click', function(){ tlSelect(tlIdx-1); pararAuto(); });
+  $('#tlNext').addEventListener('click', function(){ tlSelect(tlIdx+1); pararAuto(); });
+  var playBtn = $('#tlPlay');
+  playBtn.addEventListener('click', function(){
+    if(tlTimer){ pararAuto(); }
+    else{
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 4.5v15M16 4.5v15"/></svg> Pausar';
+      tlTimer = setInterval(function(){ tlSelect(tlIdx+1); }, 4200);
+      U.toast('▶ Reproduzindo a trajetória');
+    }
+  });
+  function pararAuto(){
+    if(tlTimer){ clearInterval(tlTimer); tlTimer=null;
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4.5v15l12-7.5z"/></svg> Reproduzir';
+    }
+  }
+
+  // teclado nas setas
+  rail.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'){ e.preventDefault(); tlSelect(tlIdx+1); }
+    if(e.key==='ArrowLeft'){ e.preventDefault(); tlSelect(tlIdx-1); }
+  });
+
+  tlSelect(0, true);
+
+  // galeria
+  var gal = $('#gal');
+  var itens = [
+    {f:D.FOTOS.centenario1, t:'Centenário da Assembleia de Deus', l:'Celebração do centenário'},
+    {f:D.FOTOS.temploCentral, t:'Templo Central', l:'Assembleia de Deus'},
+    {f:D.FOTOS.cascavel, t:'Templo Central de Cascavel', l:'Paraná'},
+    {f:D.FOTOS.aracati, t:'Templo Central em Aracati', l:'Ceará'},
+    {f:D.FOTOS.floripa, t:'Assembleia de Deus', l:'Florianópolis'},
+    {f:D.FOTOS.joinville, t:'Assembleia de Deus', l:'Joinville'},
+    {f:D.FOTOS.centenario3, t:'Atos comemorativos', l:'Assembleia de Deus'}
+  ];
+  itens.forEach(function(it,i){
+    var d = document.createElement('div'); d.className='foto';
+    d.appendChild(U.img(it.f, it.t, it.l, '#e9b54a'));
+    var cap = document.createElement('div'); cap.className='foto__cap';
+    cap.innerHTML = '<b>'+U.esc(it.t)+'</b><br><span>'+U.esc(it.l)+'</span>';
+    d.appendChild(cap);
+    gal.appendChild(d); marcarReveal(d,i);
+  });
+  $('#credFotos').textContent = D.CREDITO_FOTOS + ' As fotos são ilustrativas da denominação; substitua por registros próprios em js/dados.js.';
+})();
+
+/* ---------------------------------------------------------------- CRENÇAS */
+(function(){
+  var w = $('#crencasAcc');
+  D.CRENCAS.forEach(function(c,i){
+    var d = document.createElement('details'); d.className='acc__it';
+    d.innerHTML = '<summary>'+U.esc(c.t)+'</summary><div class="acc__it__b"><p>'+U.esc(c.v)+'</p></div>';
+    if(i===0) d.open = true;
+    w.appendChild(d); marcarReveal(d,i);
+  });
+})();
+
+/* ---------------------------------------------------------------- MINISTÉRIOS + SOCIAL */
+(function(){
+  var w = $('#minGrid');
+  D.MINISTERIOS.forEach(function(m,i){
+    var d = document.createElement('div'); d.className='card';
+    d.innerHTML = '<div class="card__ico">'+U.icon(m.icone,22)+'</div><h3>'+U.esc(m.t)+'</h3><p>'+U.esc(m.d)+'</p>';
+    w.appendChild(d); marcarReveal(d,i);
+  });
+
+  var social = [
+    {t:'Assistência social', d:'Obras de apoio a famílias em situação de vulnerabilidade — parte do reconhecimento recebido pela Lei 16.067/2015.', i:'handshake'},
+    {t:'Atuação em saúde', d:'Ministério reconhecido oficialmente pelo Estado de São Paulo pela sua contribuição em saúde comunitária.', i:'shield'},
+    {t:'Missões & plantação', d:'Sustento de missionários e plantação de novas congregações pelo litoral paulista.', i:'globe'},
+    {t:'Acolhida & intercessão', d:'Cadeia de oração, aconselhamento pastoral e acompanhamento de famílias em todas as fases da vida.', i:'heart'}
+  ];
+  var sg = $('#socialGrid');
+  social.forEach(function(s,i){
+    var d = document.createElement('div'); d.className='ob';
+    d.innerHTML = '<div class="ob__ico">'+U.icon(s.i,22)+'</div><div><h3>'+U.esc(s.t)+'</h3><p>'+U.esc(s.d)+'</p></div>';
+    sg.appendChild(d); marcarReveal(d,i);
+  });
+})();
+
+/* ---------------------------------------------------------------- LÍDERES */
+(function(){
+  var w = $('#lidGrid');
+  D.LIDERES.forEach(function(l,i){
+    var ini = l.nome.replace(/^(Pr\.|Pastora|Dep\.)\s*/,'').split(' ').filter(Boolean);
+    var ab = ((ini[0]||'')[0]||'') + ((ini[1]||'')[0]||'');
+    var d = document.createElement('div'); d.className='card';
+    d.innerHTML =
+      '<div class="lid">'+
+        '<div class="lid__av">'+U.esc(ab.toUpperCase())+'</div>'+
+        '<div class="lid__tx">'+
+          '<div class="lid__cargo">'+U.esc(l.cargo)+'</div>'+
+          '<div class="lid__nome">'+U.esc(l.nome)+'</div>'+
+          '<div class="lid__bio">'+U.esc(l.bio)+'</div>'+
+          '<div class="lid__tags">'+ (l.desde?'<span class="chip">'+U.esc(l.desde)+'</span>':'') +
+            (l.tags||[]).map(function(t){return '<span class="chip">'+U.esc(t)+'</span>';}).join('')+'</div>'+
+          (l.site?'<a class="btn btn--sm" style="margin-top:12px" href="'+l.site+'" target="_blank" rel="noopener">Perfil público</a>':'')+
+        '</div>'+
+      '</div>';
+    w.appendChild(d); marcarReveal(d,i);
+  });
+
+  var s = $('#sucList');
+  D.SUCESSAO.forEach(function(r,i){
+    var d = document.createElement('div'); d.className='suc__r';
+    d.innerHTML = '<span class="suc__ano">'+U.esc(r.ano)+'</span>'+
+      '<span><span class="suc__nome">'+U.esc(r.nome)+'</span><span class="suc__nota">'+U.esc(r.nota)+'</span></span>';
+    s.appendChild(d); marcarReveal(d,i);
+  });
+})();
+
+/* ---------------------------------------------------------------- CULTOS */
+(function(){
+  var w = $('#cultosGrid');
+  var dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  [0,1,2,3,4,5,6].forEach(function(dow){
+    var ls = D.CULTOS.filter(function(c){return c.dow===dow;});
+    if(!ls.length) return;
+    var box = document.createElement('div');
+    box.innerHTML = '<div class="dia__h"><b>'+dias[dow]+'</b><i></i></div><div class="dia__ls"></div>';
+    var ul = $('.dia__ls', box);
+    ls.forEach(function(c){
+      var r = document.createElement('div'); r.className='culto';
+      r.innerHTML = '<div class="culto__ico">'+U.icon(c.icone,20)+'</div>'+
+        '<div class="culto__hora">'+U.esc(c.hora)+'</div>'+
+        '<div class="culto__tx"><div class="culto__nome">'+U.esc(c.nome)+'</div>'+
+        '<div class="culto__sala">'+U.esc(c.sala)+'</div></div>'+
+        '<div class="culto__dia">'+Math.round(c.dur/60)+'h</div>';
+      ul.appendChild(r);
+    });
+    w.appendChild(box); marcarReveal(box, dow);
+  });
+})();
+
+/* ---------------------------------------------------------------- VISITE-NOS (mapa + contato) */
+var igrejaSel = 'sede';
+(function(){
+  var lista = $('#visLista'), painel = $('#visPainel');
+  var IG = D.IGREJAS;
+
+  var mapa = U.criarMapa($('#visMap'), {
+    pontos: IG.map(function(g){ return {id:g.id, nome:g.nome, lat:g.lat, lng:g.lng, tipo:g.tipo}; }),
+    center:[C.lat, C.lng], zoom:10
+  });
+
+  IG.forEach(function(g,i){
+    var b = document.createElement('button'); b.type='button';
+    b.className = 'vit' + (g.tipo==='sede'?' vit--sede':'');
+    b.setAttribute('role','option');
+    b.dataset.id = g.id;
+    b.innerHTML = '<span class="vit__dot"></span><span><span class="vit__nome">'+U.esc(g.nome)+
+      '</span><br><span class="vit__cid">'+U.esc(g.bairro)+' · '+U.esc(g.cidade)+'/'+U.esc(g.uf)+'</span></span>'+
+      (g.tipo==='sede'?'<span class="vit__tag">Sede</span>':'');
+    b.addEventListener('click', function(){ sel(g.id); });
+    lista.appendChild(b);
+  });
+
+  function sel(id){
+    igrejaSel = id;
+    var g = IG.filter(function(x){return x.id===id;})[0]; if(!g) return;
+    $$('.vit', lista).forEach(function(el){ el.classList.toggle('is-on', el.dataset.id===id); });
+    if(mapa.setAtivo) mapa.setAtivo(id);
+    if(mapa.map) try{ mapa.map.panTo([g.lat,g.lng], {animate:true}); }catch(e){}
+
+    painel.innerHTML =
+      '<span class="badge'+(g.tipo==='sede'?'':' badge--ok')+'">'+(g.tipo==='sede'?'Igreja Sede':'Congregação')+'</span>'+
+      '<h3>'+U.esc(g.nome)+'</h3>'+
+      '<div class="muted" style="font-size:13px">'+U.esc(g.apelido||'')+'</div>'+
+      '<p class="vis__desc">'+U.esc(g.resumo)+'</p>'+
+      '<div class="ct" style="margin-top:16px">'+
+        '<div class="ct__r">'+U.icon('pin',17)+'<span>'+U.esc(g.endereco)+' — '+U.esc(g.cidade)+'/'+U.esc(g.uf)+'</span></div>'+
+        '<div class="ct__r">'+U.icon('phone',17)+'<a href="'+U.telHref(g.telefone)+'">'+U.esc(g.telefone)+'</a></div>'+
+        '<div class="ct__r">'+U.icon('mail',17)+'<a href="mailto:'+U.esc(g.email)+'">'+U.esc(g.email)+'</a></div>'+
+      '</div>'+
+      '<div class="vis__cta">'+
+        '<a class="btn btn--gold btn--sm" href="'+U.zapHref(g.whatsapp,'Olá! Vim pelo site da AD Santos.')+'" target="_blank" rel="noopener">WhatsApp</a>'+
+        '<a class="btn btn--sm" href="'+U.mapsHref(g.mapsQuery||g.endereco)+'" target="_blank" rel="noopener">Como chegar</a>'+
+        '<a class="btn btn--sm" href="igrejas.html#'+U.esc(g.id)+'">Perfil completo</a>'+
+      '</div>';
+    painel.classList.remove('anim-fade'); void painel.offsetWidth; painel.classList.add('anim-fade');
+  }
+
+  // callback do mapa
+  if(mapa.map){ /* cliques nos marcadores */ }
+  // intercepta clique do Leaflet
+  IG.forEach(function(g){
+    var mk = mapa.marks && mapa.marks[g.id];
+    if(mk) mk.on('click', function(){ sel(g.id); });
+  });
+
+  sel('sede');
+})();
+
+/* ---------------------------------------------------------------- EVENTOS */
+(function(){
+  var w = $('#evtGrid');
+  var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  var hoje = new Date();
+  var lista = D.EVENTOS.slice().sort(function(a,b){
+    var da = new Date(hoje.getFullYear(), a.m-1, a.d), db = new Date(hoje.getFullYear(), b.m-1, b.d);
+    if(da < hoje) da = new Date(hoje.getFullYear()+1, a.m-1, a.d);
+    if(db < hoje) db = new Date(hoje.getFullYear()+1, b.m-1, b.d);
+    return da - db;
+  });
+  lista.forEach(function(e,i){
+    var d = document.createElement('div'); d.className='evt';
+    d.innerHTML = '<div class="evt__d"><div class="evt__d">'+U.esc(e.d)+'</div><div class="evt__m">'+meses[e.m-1]+'</div></div>'+
+      '<div><div class="evt__t">'+U.icon(e.icone,17)+U.esc(e.a)+'</div><div class="evt__s">'+U.esc(e.s)+'</div></div>';
+    w.appendChild(d); marcarReveal(d,i);
+  });
+})();
+
+/* ---------------------------------------------------------------- VOZES + VERSÍCULOS */
+(function(){
+  var w = $('#vozGrid');
+  D.TESTEMUNHOS.forEach(function(t,i){
+    var d = document.createElement('div'); d.className='voz';
+    d.style.borderColor = 'rgba(255,255,255,.10)';
+    d.innerHTML = '<p>'+U.esc(t.f)+'</p><b>'+U.esc(t.a)+'</b><span>'+U.esc(t.t)+'</span>';
+    w.appendChild(d); marcarReveal(d,i);
+  });
+  var v = $('#vslGrid');
+  D.VERSICULOS.forEach(function(x,i){
+    var d = document.createElement('div'); d.className='vsl';
+    d.innerHTML = '<i>'+U.esc(x.t)+'</i><b>'+U.esc(x.v)+'</b>';
+    v.appendChild(d); marcarReveal(d,i);
+  });
+})();
+
+/* ---------------------------------------------------------------- CONTATO SEDE + DÍZIMO + REDES */
+(function(){
+  var w = $('#contatoSede');
+  var linhas = [
+    ['pin', U.esc(C.endereco)+' — '+U.esc(C.cidade)+'/'+U.esc(C.uf)+' · CEP '+U.esc(C.cep), U.mapsHref(C.mapsQuery)],
+    ['phone', U.esc(C.telefone), U.telHref(C.telefone)],
+    ['mail', U.esc(C.email), 'mailto:'+U.email],
+    ['globe', U.esc(C.site), 'https://'+C.site],
+    ['star', U.esc(C.instagramLabel), C.instagram]
+  ];
+  linhas.forEach(function(l){
+    var d = document.createElement('div'); d.className='ct__r';
+    d.innerHTML = U.icon(l[0],17) + (l[2]? '<a href="'+l[2]+'" target="_blank" rel="noopener">'+l[1]+'</a>' : '<span>'+l[1]+'</span>');
+    w.appendChild(d);
+  });
+
+  $('#pixVal').textContent = C.pix + '  (' + C.banco + ')';
+  $('#btnWaze').href = U.mapsHref(C.mapsQuery);
+  $('#btnZap').href  = U.zapHref(C.whatsapp, 'Olá! Gostaria de saber mais sobre a AD Santos — A Pioneira.');
+  $('#btnMail').href = 'mailto:'+C.email;
+  $('#btnIg').href = C.instagram; $('#btnFb').href = C.facebook; $('#btnYt').href = C.youtube;
+
+  $('#btnPix').addEventListener('click', function(){
+    var txt = C.pix;
+    var done = function(){ U.toast('✔ Chave PIX copiada'); U.confete(); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done).catch(function(){ U.toast(txt); });
+    } else {
+      var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+      ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ U.toast(txt); } ta.remove();
+    }
+  });
+
+  // rodapé
+  var rc = $('#rodapeContato');
+  [['Endereço', C.endereco+' — '+C.cidade+'/'+C.uf],
+   ['CEP', C.cep], ['Telefone', C.telefone], ['E-mail', C.email]].forEach(function(p){
+    var li = document.createElement('li'); li.innerHTML = '<b style="color:#f2ede1">'+p[0]+':</b> '+U.esc(p[1]); rc.appendChild(li);
+  });
+  var rr = $('#rodapeRedes');
+  [['Instagram', C.instagram], ['Facebook', C.facebook], ['YouTube', C.youtube],
+   ['Fly 99 FM', C.radio.site], ['Nossas Igrejas', 'igrejas.html']].forEach(function(p){
+    var li = document.createElement('li'); li.innerHTML = '<a href="'+p[1]+'" target="_blank" rel="noopener">'+p[0]+'</a>'; rr.appendChild(li);
+  });
+  $('#ano').textContent = new Date().getFullYear();
+  $('#rodapeCred').textContent = D.CREDITO_FOTOS;
+})();
+
+/* ---------------------------------------------------------------- RÁDIO FLY 99 + PALETA + TOUR */
+(function(){
+  U.initRadio();
+
+  // paleta ao vivo
+  var pal = $('#pal');
+  D.PALETTES.forEach(function(p,i){
+    var b = document.createElement('button');
+    b.type='button'; b.style.background = p.base; b.title = p.label;
+    b.setAttribute('aria-label','Paleta '+p.label);
+    b.setAttribute('aria-pressed', i===0?'true':'false');
+    b.addEventListener('click', function(){
+      $$('button', pal).forEach(function(x){x.setAttribute('aria-pressed','false');});
+      b.setAttribute('aria-pressed','true');
+      window.__setPaleta && window.__setPaleta(p);
+      document.documentElement.style.setProperty('--gold', p.base);
+      U.toast('🎨 Paleta: '+p.label);
+    });
+    pal.appendChild(b);
+  });
+  document.documentElement.style.setProperty('--gold', D.PALETTES[0].base);
+  window.__paletaAtual = D.PALETTES[0];
+
+  // tour guiado
+  var tourBtn = $('#tourBtn'), tourAtivo=false, tourTimer=null;
+  tourBtn.addEventListener('click', function(){
+    tourAtivo = !tourAtivo;
+    tourBtn.classList.toggle('is-on', tourAtivo);
+    if(tourAtivo){
+      U.toast('✨ Tour guiado iniciado — role para acompanhar');
+      var alvo = 0;
+      tourTimer = setInterval(function(){
+        if(window.__waypoint){ window.__waypoint(alvo); alvo++; }
+        if(alvo >= (window.__nWaypoints||0)){ clearInterval(tourTimer); tourTimer=null; tourAtivo=false; tourBtn.classList.remove('is-on'); U.toast('Tour concluído ✓'); }
+      }, 3600);
+    } else if(tourTimer){ clearInterval(tourTimer); tourTimer=null; }
+  });
+
+  $('#explorarBtn').addEventListener('click', function(){
+    tourBtn.click();
+    window.scrollTo({top: window.innerHeight*0.6, behavior:'smooth'});
+  });
+})();
+
+})();
+</script>
+
+<!-- ==========================================================================
+     CENA 3D — templo procedural da Pioneira (Three.js r128)
+     ======================================================================= -->
+<script>
+(function(){
+'use strict';
+/* NOTA: não saímos cedo se THREE ainda não carregou — o poll waitThree()
+   abaixo resolve o fallback do CDN (cdnjs → unpkg). */
+
+var D = window.ADMS, U = window.ADMSUI, C = D.CONFIG;
+var container = document.getElementById('scene');
+
+var renderer, scene, camera, clock;
+var sun, sunHalo, hemi, ambient, rim;
+var clouds=[], doves=[], motes, sky, shafts=[];
+var church;                 // criado em init()
+var M = {};                 // materiais
+var palette;                // definido em init()
+
+/* ------------------------------------------------------------------ util */
+function clamp(v){ return Math.max(0, Math.min(255, v|0)); }
+function mkCanvas(s){ var c=document.createElement('canvas'); c.width=c.height=s; return c; }
+function tex(canvas, rep){ var t=new THREE.CanvasTexture(canvas);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; if(rep){t.repeat.set(rep,rep);}
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+
+/* ---------------------------------------------------- texturas de alta fidelidade */
+
+/* Pedra/muro: blocos de alvenaria com juntas, ruído e manchas */
+function texStone(size){
+  var c = mkCanvas(size), x = c.getContext('2d'), s = size;
+  x.fillStyle = '#6d6a63'; x.fillRect(0,0,s,s);
+
+  // ruído granulado
+  var img = x.getImageData(0,0,s,s), d = img.data;
+  for(var i=0;i<d.length;i+=4){
+    var n = (Math.random()*46-23);
+    d[i]=clamp(d[i]+n); d[i+1]=clamp(d[i+1]+n); d[i+2]=clamp(d[i+2]+n-6);
+  }
+  x.putImageData(img,0,0);
+
+  // blocos
+  var rows = 16, bh = s/rows, bw = bh*2.4;
+  for(var r=0;r<rows;r++){
+    var off = (r%2)*bw*0.5;
+    for(var bx=-1; bx<s/bw+1; bx++){
+      var px = off + bx*bw, py = r*bh;
+      // junta
+      x.strokeStyle='rgba(38,36,32,.75)'; x.lineWidth=Math.max(2, s/420);
+      x.strokeRect(px+1, py+1, bw-2, bh-2);
+      // relevo interno
+      var g = x.createLinearGradient(px, py, px, py+bh);
+      g.addColorStop(0,'rgba(255,255,255,.06)');
+      g.addColorStop(1,'rgba(0,0,0,.10)');
+      x.fillStyle=g; x.fillRect(px+2, py+2, bw-4, bh-4);
+      // manchas
+      if(Math.random()<0.28){
+        x.fillStyle='rgba(40,38,34,'+(0.05+Math.random()*0.12)+')';
+        x.beginPath(); x.ellipse(px+bw*Math.random(), py+bh*Math.random(), bw*0.22, bh*0.28, 0, 0, 7); x.fill();
+      }
+    }
+  }
+  // fissuras
+  x.strokeStyle='rgba(24,22,20,.35)';
+  for(var k=0;k<7;k++){
+    x.lineWidth=Math.max(1, s/700); x.beginPath();
+    var sx=Math.random()*s, sy=Math.random()*s; x.moveTo(sx,sy);
+    for(var w=0;w<6;w++){ sx+=(Math.random()-0.5)*s*0.09; sy+=(Math.random()-0.3)*s*0.09; x.lineTo(sx,sy); }
+    x.stroke();
+  }
+  return c;
+}
+
+/* Telha/telhado: fiadas com sombreamento */
+function texRoof(size){
+  var c = mkCanvas(size), x = c.getContext('2d'), s = size;
+  x.fillStyle='#7a3a2b'; x.fillRect(0,0,s,s);
+  var rows=13, bh=s/rows;
+  for(var r=0;r<rows;r++){
+    var py=r*bh, off=(r%2)*bh*0.6;
+    for(var bx=-1;bx<s/(bh*1.2)+1;bx++){
+      var px=off+bx*bh*1.2;
+      var g=x.createLinearGradient(px,py,px,py+bh);
+      var t=Math.random()*0.16;
+      g.addColorStop(0,'rgba(255,190,150,'+(0.12+t)+')');
+      g.addColorStop(0.5,'rgba(120,58,42,.9)');
+      g.addColorStop(1,'rgba(48,22,16,.95)');
+      x.fillStyle=g;
+      x.beginPath();
+      x.moveTo(px, py+bh); x.lineTo(px, py+bh*0.42);
+      x.quadraticCurveTo(px+bh*0.6, py-bh*0.06, px+bh*1.2, py+bh*0.42);
+      x.lineTo(px+bh*1.2, py+bh); x.closePath(); x.fill();
+      x.strokeStyle='rgba(30,14,10,.55)'; x.lineWidth=Math.max(1,s/500); x.stroke();
+    }
+  }
+  var im=x.getImageData(0,0,s,s), d=im.data;
+  for(var i=0;i<d.length;i+=4){ var n=(Math.random()*30-15); d[i]=clamp(d[i]+n); d[i+1]=clamp(d[i+1]+n); d[i+2]=clamp(d[i+2]+n); }
+  x.putImageData(im,0,0);
+  return c;
+}
+
+/* Madeira (porta, bancos, púlpito) */
+function texWood(size){
+  var c=mkCanvas(size), x=c.getContext('2d'), s=size;
+  x.fillStyle='#5a3a22'; x.fillRect(0,0,s,s);
+  for(var i=0;i<230;i++){
+    x.strokeStyle='rgba('+(30+Math.random()*40|0)+','+(18+Math.random()*24|0)+',10,'+(0.10+Math.random()*0.22)+')';
+    x.lineWidth=0.6+Math.random()*2.4; x.beginPath();
+    var yy=Math.random()*s; x.moveTo(0,yy);
+    for(var px=0;px<s;px+=s/8){ x.lineTo(px, yy+Math.sin(px/30+i)*3.2+(Math.random()-0.5)*3); }
+    x.stroke();
+  }
+  var im=x.getImageData(0,0,s,s), d=im.data;
+  for(var j=0;j<d.length;j+=4){ var n=(Math.random()*22-11); d[j]=clamp(d[j]+n); d[j+1]=clamp(d[j+1]+n); d[j+2]=clamp(d[j+2]+n); }
+  x.putImageData(im,0,0);
+  return c;
+}
+
+/* Calçada da praça */
+function texPave(size){
+  var c=mkCanvas(size), x=c.getContext('2d'), s=size;
+  x.fillStyle='#4c4a47'; x.fillRect(0,0,s,s);
+  var n=10, cell=s/n;
+  for(var r=0;r<n;r++) for(var q=0;q<n;q++){
+    var off=(r%2)*cell*0.5;
+    var shade=52+Math.random()*30;
+    x.fillStyle='rgb('+(shade|0)+','+((shade-2)|0)+','+((shade-5)|0)+')';
+    x.fillRect(q*cell+off+1.5, r*cell+1.5, cell-3, cell-3);
+  }
+  var im=x.getImageData(0,0,s,s), d=im.data;
+  for(var i=0;i<d.length;i+=4){ var nn=(Math.random()*24-12); d[i]=clamp(d[i]+nn); d[i+1]=clamp(d[i+1]+nn); d[i+2]=clamp(d[i+2]+nn); }
+  x.putImageData(im,0,0);
+  return c;
+}
+
+/* Vitral: painéis com chumbos e desenho geométrico */
+function texStained(size){
+  var c=mkCanvas(size), x=c.getContext('2d'), s=size;
+  x.fillStyle='#0d1428'; x.fillRect(0,0,s,s);
+  var cols=['#e9b54a','#d8434b','#5cc8ff','#6fd08c','#b58cff','#ff8f6b'];
+  // arco
+  function painel(px,py,w,h){
+    var g=x.createLinearGradient(px,py,px,py+h);
+    var col=cols[(Math.random()*cols.length)|0];
+    g.addColorStop(0, col); g.addColorStop(1, '#ffffff');
+    x.fillStyle=g; x.globalAlpha=0.9;
+    x.beginPath(); x.moveTo(px,py+h);
+    x.lineTo(px,py+w*0.35); x.quadraticCurveTo(px+w/2,py-w*0.18,px+w,py+w*0.35);
+    x.lineTo(px+w,py+h); x.closePath(); x.fill(); x.globalAlpha=1;
+    // chumbos
+    x.strokeStyle='rgba(10,10,14,.9)'; x.lineWidth=Math.max(2,s/150);
+    for(var i=1;i<4;i++){ x.beginPath(); x.moveTo(px, py+h*i/4); x.lineTo(px+w, py+h*i/4); x.stroke(); }
+    x.beginPath(); x.moveTo(px+w/2,py+w*0.2); x.lineTo(px+w/2,py+h); x.stroke();
+    x.strokeRect(px,py,w,h);
+  }
+  painel(s*0.08, s*0.30, s*0.34, s*0.56);
+  painel(s*0.58, s*0.30, s*0.34, s*0.56);
+  // rosácea
+  var cx=s*0.5, cy=s*0.16, R=s*0.15;
+  for(var k=0;k<8;k++){
+    var a=k/8*Math.PI*2, b=(k+1)/8*Math.PI*2;
+    x.fillStyle=cols[k%cols.length]; x.globalAlpha=.92;
+    x.beginPath(); x.moveTo(cx,cy);
+    x.arc(cx,cy,R,a,b); x.closePath(); x.fill();
+  }
+  x.globalAlpha=1; x.strokeStyle='rgba(10,10,14,.95)'; x.lineWidth=Math.max(2,s/140);
+  x.beginPath(); x.arc(cx,cy,R,0,7); x.stroke();
+  x.beginPath(); x.arc(cx,cy,R*0.5,0,7); x.stroke();
+  return c;
+}
+
+/* ------------------------------------------------------------------ materiais */
+function buildMaterials(){
+  var stoneC = texStone(2048);
+  var stoneT = tex(stoneC, 3);
+  var stoneB = tex(stoneC, 3);
+
+  M.stone = new THREE.MeshStandardMaterial({ color:0xd9d4c8, map:stoneT, bumpMap:stoneB, bumpScale:0.045, roughness:0.95, metalness:0.02 });
+  M.stoneDark = new THREE.MeshStandardMaterial({ color:0xa9a394, map:tex(stoneC,2), bumpMap:tex(stoneC,2), bumpScale:0.04, roughness:1, metalness:0.02 });
+  M.trim = new THREE.MeshStandardMaterial({ color:0xefe7d4, roughness:0.7, metalness:0.05 });
+
+  var roofC = texRoof(1024);
+  M.roof = new THREE.MeshStandardMaterial({ color:0xffffff, map:tex(roofC,4), bumpMap:tex(roofC,4), bumpScale:0.03, roughness:0.86, metalness:0.03, side:THREE.DoubleSide });
+
+  var woodC = texWood(512);
+  M.wood = new THREE.MeshStandardMaterial({ color:0xffffff, map:tex(woodC,2), bumpMap:tex(woodC,2), bumpScale:0.02, roughness:0.72, metalness:0.05 });
+  M.woodDark = new THREE.MeshStandardMaterial({ color:0xb08a63, map:tex(woodC,1), roughness:0.8, metalness:0.05 });
+
+  var paveC = texPave(1024);
+  M.pave = new THREE.MeshStandardMaterial({ color:0xffffff, map:tex(paveC,26), roughness:1, metalness:0.02 });
+  M.grass = new THREE.MeshStandardMaterial({ color:0x33512f, roughness:1, metalness:0 });
+
+  var stC = texStained(1024);
+  M.glass = new THREE.MeshStandardMaterial({ color:0xffffff, map:tex(stC,1), emissive:0xffffff, emissiveMap:tex(stC,1), emissiveIntensity:1.25, roughness:0.28, metalness:0.1, side:THREE.DoubleSide });
+  M.glassPlain = new THREE.MeshStandardMaterial({ color:0x8fb6d8, emissive:0x3a5a80, emissiveIntensity:0.5, roughness:0.15, metalness:0.2, transparent:true, opacity:0.85, side:THREE.DoubleSide });
+
+  M.gold = new THREE.MeshStandardMaterial({ color:0xe9b54a, emissive:0x6d5220, emissiveIntensity:0.55, roughness:0.3, metalness:0.9 });
+  M.metal = new THREE.MeshStandardMaterial({ color:0x2b2f3a, roughness:0.4, metalness:0.85 });
+  M.dark = new THREE.MeshStandardMaterial({ color:0x151310, roughness:1, metalness:0 });
+  M.lamp = new THREE.MeshStandardMaterial({ color:0xfff0c4, emissive:0xffd98a, emissiveIntensity:1.6, roughness:0.4 });
+
+  M.wallIn = new THREE.MeshStandardMaterial({ color:0xf0ead9, roughness:0.92, metalness:0.02, side:THREE.DoubleSide });
+  M.floor = new THREE.MeshStandardMaterial({ color:0x6b4a2c, roughness:0.62, metalness:0.05 });
+}
+
+/* ------------------------------------------------------------------ helpers geo */
+function box(w,h,d,mat,x,y,z,parent){
+  var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true;
+  (parent||church).add(m); return m;
+}
+function cyl(rt,rb,h,mat,x,y,z,seg,parent){
+  var m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||16), mat);
+  m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true;
+  (parent||church).add(m); return m;
+}
+function torus(r,t,mat,x,y,z,parent){
+  var m = new THREE.Mesh(new THREE.TorusGeometry(r,t,10,26), mat);
+  m.position.set(x,y,z); m.castShadow=true; (parent||church).add(m); return m;
+}
+
+/* Janela em arco (recessada + vitral + mullions) */
+function janela(x,y,z,rotY,w,h,parent){
+  var g = new THREE.Group(); g.position.set(x,y,z); g.rotation.y = rotY||0; (parent||church).add(g);
+  // moldura externa em arco
+  var arco = new THREE.Mesh(new THREE.TorusGeometry(w*0.5, 0.14, 8, 22, Math.PI), M.trim);
+  arco.position.set(0, h*0.16, 0); arco.castShadow=true; g.add(arco);
+  // painel de vitral
+  var gl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), M.glass);
+  gl.position.z = -0.06; g.add(gl);
+  // vitral externo (frente)
+  var gl2 = new THREE.Mesh(new THREE.PlaneGeometry(w*0.92, h*0.9), M.glass);
+  gl2.position.z = 0.07; g.add(gl2);
+  // mullions (divisórias)
+  var mv = new THREE.Mesh(new THREE.BoxGeometry(0.07, h*0.9, 0.1), M.trim);
+  mv.position.set(0, 0, 0.09); mv.castShadow=true; g.add(mv);
+  for(var i=-1;i<=1;i+=2){
+    var mh = new THREE.Mesh(new THREE.BoxGeometry(w*0.9, 0.06, 0.1), M.trim);
+    mh.position.set(0, h*0.2*i, 0.09); mh.castShadow=true; g.add(mh);
+  }
+  return g;
+}
+
+/* ------------------------------------------------------------------ IGREJA */
+function buildChurch(){
+  church.position.set(0,0,0);
+
+  var NAV_W = 22, NAV_L = 40, NAV_H = 15;
+
+  /* ---- solo / praça ---- */
+  var pave = new THREE.Mesh(new THREE.PlaneGeometry(220,220), M.pave);
+  pave.rotation.x = -Math.PI/2; pave.position.y = -0.02; pave.receiveShadow = true; scene.add(pave);
+  var gramado = new THREE.Mesh(new THREE.CircleGeometry(110, 40), M.grass);
+  gramado.rotation.x=-Math.PI/2; gramado.position.y=-0.05; gramado.receiveShadow=true; scene.add(gramado);
+
+  /* ---- degraus da entrada ---- */
+  for(var s=0;s<4;s++){
+    box(NAV_W*0.86 - s*0.9, 0.35, 1.4 + s*0.5, M.stone, 0, 0.175 + (3-s)*0.35, NAV_L/2 + 3.2 + s*0.5);
+  }
+  // guarda-corpo / balaustrada lateral
+  [-1,1].forEach(function(sg){
+    for(var i=0;i<9;i++){
+      cyl(0.16,0.13,1.0,M.trim, sg*(NAV_W*0.43 - 0.4), 1.4, NAV_L/2 + 2.2 + i*0.55, 10);
+    }
+    box(0.4,0.16, 5.4, M.trim, sg*(NAV_W*0.43 - 0.4), 2.0, NAV_L/2 + 4.4);
+  });
+
+  /* ---- CORPO (nave) ----
+     paredes laterais em caixa dupla (exterior + interior), fachada frontal
+     com vão de porta real, e fundo fechado. */
+  // lado esquerdo
+  box(0.6, NAV_H, NAV_L, M.stone, -NAV_W/2, NAV_H/2, 0);
+  // lado direito
+  box(0.6, NAV_H, NAV_L, M.stone,  NAV_W/2, NAV_H/2, 0);
+  // fundo (altar)
+  box(NAV_W, NAV_H, 0.6, M.stone, 0, NAV_H/2, -NAV_L/2);
+
+  // FACHADA FRONTAL com vão de porta: esquerda, direita e lintel
+  var DOOR_W = 5.2, DOOR_H = 7.2;
+  var fw = (NAV_W - DOOR_W)/2;
+  box(fw, NAV_H, 0.7, M.stone, -(DOOR_W/2 + fw/2), NAV_H/2, NAV_L/2);
+  box(fw, NAV_H, 0.7, M.stone,  (DOOR_W/2 + fw/2), NAV_H/2, NAV_L/2);
+  box(DOOR_W, NAV_H - DOOR_H, 0.7, M.stone, 0, DOOR_H + (NAV_H-DOOR_H)/2, NAV_L/2);
+
+  // beiral / cornija
+  box(NAV_W+1.6, 0.6, 0.9, M.trim, 0, NAV_H+0.3, NAV_L/2);
+  box(NAV_W+1.6, 0.6, 0.9, M.trim, 0, NAV_H+0.3, -NAV_L/2);
+
+  // contrafortes laterais
+  for(var bf=0; bf<5; bf++){
+    var zz = -NAV_L/2 + 6 + bf*8;
+    [-1,1].forEach(function(sg){
+      box(1.0, NAV_H*0.82, 1.1, M.stoneDark, sg*(NAV_W/2 + 0.55), NAV_H*0.41, zz);
+      // topo chanfrado
+      var cap = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.1, 4), M.trim);
+      cap.position.set(sg*(NAV_W/2 + 0.55), NAV_H*0.82 + 0.55, zz); cap.rotation.y=Math.PI/4; cap.castShadow=true; church.add(cap);
+    });
+  }
+
+  /* ---- JANELAS LATERAIS em arco (vitrais) ---- */
+  for(var jw=0; jw<4; jw++){
+    var zpos = -NAV_L/2 + 8 + jw*8;
+    [-1,1].forEach(function(sg){
+      janela(sg*(NAV_W/2 + 0.32), NAV_H*0.55, zpos, sg*Math.PI/2, 3.4, 7.4);
+      // lucernário (claraboia) sobre a janela, à moda gótica
+      var gable = new THREE.Mesh(new THREE.ConeGeometry(1.6, 2.2, 4), M.trim);
+      gable.position.set(sg*(NAV_W/2 + 0.32), NAV_H*0.55 + 4.9, zpos);
+      gable.rotation.y=Math.PI/4; gable.castShadow=true; church.add(gable);
+    });
+  }
+
+  /* ---- ROSE / ROSÁCEA na fachada ---- */
+  var rose = new THREE.Mesh(new THREE.CircleGeometry(2.9, 26), M.glass);
+  rose.position.set(0, NAV_H*0.72, NAV_L/2 + 0.4); church.add(rose);
+  var roseRing = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.24, 10, 30), M.trim);
+  roseRing.position.set(0, NAV_H*0.72, NAV_L/2 + 0.45); roseRing.castShadow=true; church.add(roseRing);
+  for(var rs=0; rs<10; rs++){
+    var a = rs/10*Math.PI*2;
+    var sp = new THREE.Mesh(new THREE.BoxGeometry(0.12, 5.6, 0.12), M.trim);
+    sp.position.set(0, NAV_H*0.72, NAV_L/2 + 0.42); sp.rotation.z = a; sp.castShadow=true; church.add(sp);
+  }
+
+  /* ---- PORTAL EM ARCO (arcobotantes + arquivoltas + batente) ---- */
+  // arquivoltas (anéis concêntricos)
+  for(var q=0;q<3;q++){
+    var tq = new THREE.Mesh(new THREE.TorusGeometry(DOOR_W/2 + 0.35 + q*0.4, 0.2, 10, 28, Math.PI), M.trim);
+    tq.position.set(0, DOOR_H - DOOR_W/2, NAV_L/2 + 0.4); tq.castShadow=true; church.add(tq);
+  }
+  // colunetas do portal
+  [-1,1].forEach(function(sg){
+    for(var c2=0;c2<2;c2++){
+      cyl(0.28,0.32, DOOR_H - DOOR_W/2, M.trim, sg*(DOOR_W/2 + 0.35 + c2*0.4), (DOOR_H - DOOR_W/2)/2, NAV_L/2 + 0.4, 12);
+    }
+    // capitelo
+    box(0.9,0.4,0.7, M.trim, sg*(DOOR_W/2+0.35), DOOR_H - DOOR_W/2 + 0.2, NAV_L/2 + 0.4);
+  });
+  // tympanum (selo triangular sobre o portal)
+  var tym = new THREE.Mesh(new THREE.ConeGeometry(3.6, 2.4, 3), M.trim);
+  tym.position.set(0, DOOR_H + 1.3, NAV_L/2 + 0.35); tym.rotation.set(0,0,0); tym.rotation.y=Math.PI/2; tym.castShadow=true; church.add(tym);
+
+  // PORTAS de madeira (abertas, viradas para dentro)
+  var doorL = box(DOOR_W/2 - 0.1, DOOR_H - 0.6, 0.22, M.wood, -(DOOR_W/4), (DOOR_H-0.6)/2, NAV_L/2 - 0.9);
+  doorL.rotation.y = -0.5;
+  var doorR = box(DOOR_W/2 - 0.1, DOOR_H - 0.6, 0.22, M.wood,  (DOOR_W/4), (DOOR_H-0.6)/2, NAV_L/2 - 0.9);
+  doorR.rotation.y = 0.5;
+  // ferragens
+  [doorL,doorR].forEach(function(dr){
+    for(var h=0;h<3;h++){
+      var hg = new THREE.Mesh(new THREE.BoxGeometry(dr.geometry.parameters.width*0.9, 0.12, 0.06), M.metal);
+      hg.position.set(0, (h-1)*1.5, 0.16); dr.add(hg);
+    }
+    var hd = new THREE.Mesh(new THREE.SphereGeometry(0.14,10,10), M.gold);
+    hd.position.set(dr===doorL?0.35:-0.35, 0, 0.18); dr.add(hd);
+  });
+
+  /* ---- TELHADO (duas águas) ---- */
+  var roofW = NAV_W + 3.2, roofL = NAV_L + 3.6, roofH = 6.4;
+  var rl = new THREE.Mesh(new THREE.BoxGeometry(roofW*0.62, 0.5, roofL), M.roof);
+  rl.position.set(-roofW*0.245, NAV_H + roofH*0.42, 0); rl.rotation.z = -0.72; rl.castShadow=true; rl.receiveShadow=true; church.add(rl);
+  var rr = new THREE.Mesh(new THREE.BoxGeometry(roofW*0.62, 0.5, roofL), M.roof);
+  rr.position.set(roofW*0.245, NAV_H + roofH*0.42, 0); rr.rotation.z = 0.72; rr.castShadow=true; rr.receiveShadow=true; church.add(rr);
+  // cumeeira
+  box(0.5, 0.5, roofL, M.trim, 0, NAV_H + roofH*0.86, 0);
+
+  // frontão triangular da fachada
+  var frontao = new THREE.Mesh(new THREE.CylinderGeometry(0.001, (NAV_W)/1.05, roofH*0.95, 3), M.stone);
+  frontao.position.set(0, NAV_H + roofH*0.45, NAV_L/2 + 0.35); frontao.rotation.y = Math.PI/2; frontao.scale.z=0.42; frontao.castShadow=true; church.add(frontao);
+
+  /* ---- TORRE + CAMPANÁRIO + CRUZ ---- */
+  var TW = 7.2, TH = 30;
+  var tx = -(NAV_W/2 + TW/2 - 0.6), tz = NAV_L/2 + 1.0;
+  box(TW, TH, TW, M.stone, tx, TH/2, tz);
+  // faixa/marcador
+  box(TW+0.5, 0.5, TW+0.5, M.trim, tx, TH*0.42, tz);
+  box(TW+0.5, 0.5, TW+0.5, M.trim, tx, TH*0.86, tz);
+  // janelas da torre
+  for(var tv=0;tv<3;tv++){
+    var ty = TH*0.25 + tv*TH*0.18;
+    [-1,1].forEach(function(sg){
+      janela(tx + sg*(TW/2 + 0.3), ty, tz, sg*Math.PI/2, 1.5, 3.2);
+      janela(tx, ty, tz + sg*(TW/2 + 0.3), sg>0?0:Math.PI, 1.5, 3.2);
+    });
+  }
+  // campa (sino)
+  var sino = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.3, 1.7, 20), M.gold);
+  sino.position.set(tx, TH*0.92, tz); sino.castShadow=true; church.add(sino);
+  var sinoCap = new THREE.Mesh(new THREE.SphereGeometry(0.9, 18, 12, 0, 6.283, 0, 1.5), M.gold);
+  sinoCap.position.set(tx, TH*0.92+0.85, tz); church.add(sinoCap);
+
+  // telhado da torre (pirâmide)
+  var spire = new THREE.Mesh(new THREE.ConeGeometry(TW*0.82, 8, 4), M.roof);
+  spire.position.set(tx, TH + 4, tz); spire.rotation.y = Math.PI/4; spire.castShadow=true; church.add(spire);
+
+  // pinálio + CRUZ dourada com filigrana
+  var pin = new THREE.Mesh(new THREE.SphereGeometry(0.42,12,12), M.gold);
+  pin.position.set(tx, TH + 8.2, tz); church.add(pin);
+  var CR = 5.4;
+  var cv = new THREE.Mesh(new THREE.BoxGeometry(0.42, CR, 0.42), M.gold);
+  cv.position.set(tx, TH + 8.4 + CR/2, tz); cv.castShadow=true; church.add(cv);
+  var ch = new THREE.Mesh(new THREE.BoxGeometry(CR*0.62, 0.42, 0.42), M.gold);
+  ch.position.set(tx, TH + 8.4 + CR*0.72, tz); ch.castShadow=true; church.add(ch);
+  // pontas ornamentais
+  [[0,CR],[CR*0.31,CR*0.72],[-CR*0.31,CR*0.72]].forEach(function(p){
+    var k = new THREE.Mesh(new THREE.SphereGeometry(0.26,10,10), M.gold);
+    k.position.set(tx + p[0], TH + 8.4 + p[1], tz); church.add(k);
+  });
+  // halo da cruz
+  var haloC = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 16),
+    new THREE.MeshBasicMaterial({color:0xffe6a8, transparent:true, opacity:0.22}));
+  haloC.position.set(tx, TH + 8.4 + CR*0.8, tz); church.add(haloC);
+
+  /* ---- LANÇA DE LUZ (feixe volumétrico simulado) ---- */
+  var shaftMat = new THREE.MeshBasicMaterial({ color:0xffe6b0, transparent:true, opacity:0.10,
+    blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+  [-1,1].forEach(function(sg){
+    for(var sf=0; sf<3; sf++){
+      var sh = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 13), shaftMat);
+      sh.position.set(sg*(NAV_W/2 + 1.4), NAV_H*0.5, -NAV_L/2 + 9 + sf*9);
+      sh.rotation.set(0, sg*Math.PI/2, sg*0.28);
+      church.add(sh); shafts.push(sh);
+    }
+  });
+
+  /* ---- INTERIOR ---- */
+  var interior = new THREE.Group(); church.add(interior);
+
+  // piso de madeira
+  var fl = new THREE.Mesh(new THREE.PlaneGeometry(NAV_W-1.2, NAV_L-1.2), M.floor);
+  fl.rotation.x=-Math.PI/2; fl.position.set(0, 0.02, 0); fl.receiveShadow=true; interior.add(fl);
+
+  // painéis internos nas paredes
+  box(0.25, NAV_H*0.5, NAV_L-2, M.wallIn, -(NAV_W/2-0.35), NAV_H*0.25, 0, interior).castShadow=false;
+  box(0.25, NAV_H*0.5, NAV_L-2, M.wallIn,  (NAV_W/2-0.35), NAV_H*0.25, 0, interior).castShadow=false;
+  box(NAV_W-1, NAV_H*0.5, 0.25, M.wallIn, 0, NAV_H*0.25, -(NAV_L/2-0.35), interior).castShadow=false;
+
+  // BANCOS (fileiras com corrimão)
+  for(var row=0; row<9; row++){
+    var zp = NAV_L/2 - 5 - row*3.0;
+    [-1,1].forEach(function(sg){
+      var bench = new THREE.Group();
+      // assento
+      var seat = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.2, 1.0), M.wood);
+      seat.position.set(0, 0.95, 0); seat.castShadow=true; bench.add(seat);
+      var back = new THREE.Mesh(new THREE.BoxGeometry(8.2, 1.5, 0.16), M.wood);
+      back.position.set(0, 1.6, 0.44); back.castShadow=true; bench.add(back);
+      // pés
+      [-1,1].forEach(function(e){
+        var leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.95), M.woodDark);
+        leg.position.set(e*4.0, 0.47, 0); leg.castShadow=true; bench.add(leg);
+      });
+      bench.position.set(sg*5.0, 0, zp); interior.add(bench);
+    });
+  }
+
+  // corredor central (tapete)
+  var carpet = new THREE.Mesh(new THREE.PlaneGeometry(2.4, NAV_L-8),
+    new THREE.MeshStandardMaterial({color:0x7a2f30, roughness:0.95}));
+  carpet.rotation.x=-Math.PI/2; carpet.position.set(0,0.04,2); carpet.receiveShadow=true; interior.add(carpet);
+
+  // PÚLPITO
+  var pulp = new THREE.Group(); pulp.position.set(0, 0, -NAV_L/2 + 7); interior.add(pulp);
+  var pb = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.4, 2.4), M.woodDark); pb.position.y=1.2; pb.castShadow=true; pulp.add(pb);
+  var ptop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.18, 2.6), M.wood); ptop.position.y=2.45; ptop.castShadow=true; pulp.add(ptop);
+  // balaústre do púlpito
+  for(var bi=0; bi<7; bi++){
+    var bal = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.09,0.9,8), M.wood);
+    bal.position.set(-1.5+bi*0.5, 2.9, 1.25); bal.castShadow=true; pulp.add(bal);
+  }
+  box(3.5,0.14,0.14,M.wood, 0, 3.35, 1.25, pulp);
+
+  // MESA DA CEIA / ALTAR
+  var alt = new THREE.Group(); alt.position.set(0,0,-NAV_L/2 + 2.6); interior.add(alt);
+  var table = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.22, 1.6), M.wood); table.position.y=1.5; table.castShadow=true; alt.add(table);
+  [-1.1,1.1].forEach(function(e){
+    var leg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.5, 1.4), M.woodDark); leg.position.set(e*1.8, 0.75, 0); leg.castShadow=true; alt.add(leg);
+  });
+  var cloth = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.06, 1.8),
+    new THREE.MeshStandardMaterial({color:0xf3ecdb, roughness:0.9}));
+  cloth.position.y=1.63; alt.add(cloth);
+  // toalha pendurada
+  var fall = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.1, 0.05),
+    new THREE.MeshStandardMaterial({color:0xf3ecdb, roughness:0.9}));
+  fall.position.set(0, 1.1, 0.92); alt.add(fall);
+  // cálice dourado
+  var cal = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.1,0.34,14), M.gold); cal.position.set(0,1.9,0); alt.add(cal);
+  var calStem = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.2,10), M.gold); calStem.position.set(0,1.7,0); alt.add(calStem);
+  // pão
+  var pao = new THREE.Mesh(new THREE.SphereGeometry(0.26,14,10), new THREE.MeshStandardMaterial({color:0xd8b072, roughness:0.9}));
+  pao.scale.set(1.3,0.6,1.0); pao.position.set(0.9,1.8,0); alt.add(pao);
+
+  // CRUZ no fundo do altar
+  var acv = new THREE.Mesh(new THREE.BoxGeometry(0.35, 4.6, 0.35), M.gold); acv.position.set(0, 5.2, -NAV_L/2 + 0.9); acv.castShadow=true; interior.add(acv);
+  var ach = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.35, 0.35), M.gold); ach.position.set(0, 6.3, -NAV_L/2 + 0.9); ach.castShadow=true; interior.add(ach);
+  var ahalo = new THREE.Mesh(new THREE.SphereGeometry(1.1,16,16),
+    new THREE.MeshBasicMaterial({color:0xffe6a8, transparent:true, opacity:0.28, blending:THREE.AdditiveBlending, depthWrite:false}));
+  ahalo.position.set(0, 5.8, -NAV_L/2 + 1.1); interior.add(ahalo);
+
+  // CAND (lustres)
+  for(var ch2=0; ch2<4; ch2++){
+    var cz = -NAV_L/2 + 8 + ch2*8;
+    var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,3.4,6), M.metal); rod.position.set(0, NAV_H-2.0, cz); interior.add(rod);
+    var ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.07, 8, 22), M.gold); ring.position.set(0, NAV_H-3.7, cz); ring.rotation.x=Math.PI/2; interior.add(ring);
+    for(var bl=0; bl<8; bl++){
+      var a = bl/8*Math.PI*2;
+      var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8), M.lamp);
+      bulb.position.set(Math.cos(a)*1.3, NAV_H-3.55, cz + Math.sin(a)*1.3); interior.add(bulb);
+    }
+    var li = new THREE.PointLight(0xffd9a0, 0.6, 22, 2); li.position.set(0, NAV_H-3.6, cz); interior.add(li);
+  }
+
+  // luz de altar
+  var altarLight = new THREE.PointLight(0xffd98a, 1.5, 30, 2); altarLight.position.set(0, 8, -NAV_L/2 + 4); interior.add(altarLight);
+  var entryLight = new THREE.PointLight(0xfff0c4, 1.0, 26, 2); entryLight.position.set(0, 6, NAV_L/2 - 3); interior.add(entryLight);
+
+  scene.add(church);
+}
+
+/* ------------------------------------------------------------------ CÉU */
+function buildSky(){
+  var geo = new THREE.SphereGeometry(700, 32, 20);
+  var mat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite:false,
+    uniforms: {
+      top: { value: new THREE.Color(palette.sky1) },
+      bottom: { value: new THREE.Color(palette.sky2) },
+      glowC: { value: new THREE.Color(palette.glow) },
+      sunPos: { value: new THREE.Vector3(0.5,0.35,-0.6).normalize() }
+    },
+    vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:
+      'uniform vec3 top; uniform vec3 bottom; uniform vec3 glowC; uniform vec3 sunPos; varying vec3 vP;\n'+
+      'void main(){\n'+
+      '  float h = clamp(vP.y*0.5+0.5, 0.0, 1.0);\n'+
+      '  vec3 col = mix(bottom, top, pow(h, 0.75));\n'+
+      '  float d = max(dot(vP, sunPos), 0.0);\n'+
+      '  col += glowC * pow(d, 6.0) * 0.9;\n'+
+      '  col += glowC * pow(d, 1.6) * 0.25;\n'+
+      '  gl_FragColor = vec4(col, 1.0);\n'+
+      '}'
+  });
+  sky = new THREE.Mesh(geo, mat); scene.add(sky);
+}
+
+/* ------------------------------------------------------------------ sol + nuvens + pombas + poeira */
+function buildAtmos(){
+  sun = new THREE.Mesh(new THREE.SphereGeometry(9, 20, 20),
+    new THREE.MeshBasicMaterial({ color: palette.sun }));
+  sun.position.set(120, 80, -170); scene.add(sun);
+
+  sunHalo = new THREE.Mesh(new THREE.SphereGeometry(20, 20, 20),
+    new THREE.MeshBasicMaterial({ color: palette.sun, transparent:true, opacity:0.28,
+      blending:THREE.AdditiveBlending, depthWrite:false }));
+  sunHalo.position.copy(sun.position); scene.add(sunHalo);
+
+  // nuvens (elipses suaves)
+  var cloudMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.14, depthWrite:false });
+  for(var i=0;i<11;i++){
+    var g = new THREE.Group();
+    for(var p=0;p<4;p++){
+      var s = new THREE.Mesh(new THREE.SphereGeometry(6+Math.random()*5, 10, 8), cloudMat);
+      s.position.set((Math.random()-0.5)*14, (Math.random()-0.5)*4, (Math.random()-0.5)*8);
+      s.scale.y = 0.5; g.add(s);
+    }
+    g.position.set((Math.random()-0.5)*460, 60+Math.random()*90, -120 - Math.random()*260);
+    g.userData.sp = 0.35 + Math.random()*0.6;
+    scene.add(g); clouds.push(g);
+  }
+
+  // pombas
+  var doveMat = new THREE.MeshStandardMaterial({ color:0xf7f4ec, roughness:0.8 });
+  for(var d2=0; d2<7; d2++){
+    var bird = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), doveMat);
+    body.scale.set(1.5, 0.75, 0.75); bird.add(body);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), doveMat);
+    head.position.set(0.75, 0.28, 0); bird.add(head);
+    var tail = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.2, 4), doveMat);
+    tail.rotation.z = Math.PI/2; tail.position.set(-1.0, 0, 0); bird.add(tail);
+    var wl = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 1.7), doveMat);
+    wl.position.set(0, 0.1, 0.9); wl.rotation.x = -0.3; bird.add(wl);
+    var wr = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 1.7), doveMat);
+    wr.position.set(0, 0.1, -0.9); wr.rotation.x = 0.3; bird.add(wr);
+    bird.userData = { r: 34+Math.random()*22, y: 28+Math.random()*20, a: Math.random()*6.28,
+                      sp: 0.12+Math.random()*0.14, fl: wl, fr: wr };
+    scene.add(bird); doves.push(bird);
+  }
+
+  // poeira / motes
+  var N = 900, pos = new Float32Array(N*3);
+  for(var m=0;m<N;m++){
+    pos[m*3]   = (Math.random()-0.5)*70;
+    pos[m*3+1] = Math.random()*40;
+    pos[m*3+2] = (Math.random()-0.5)*70;
+  }
+  var pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  motes = new THREE.Points(pg, new THREE.PointsMaterial({ color:0xffe6b0, size:0.14, transparent:true, opacity:0.55, depthWrite:false, blending:THREE.AdditiveBlending }));
+  scene.add(motes);
+}
+
+/* ------------------------------------------------------------------ luzes */
+function buildLights(){
+  hemi = new THREE.HemisphereLight(0xbcd6ff, 0x2a2418, 0.75); scene.add(hemi);
+  ambient = new THREE.AmbientLight(0xffffff, 0.28); scene.add(ambient);
+
+  sun = sun || new THREE.Mesh();
+  var dir = new THREE.DirectionalLight(0xfff0c4, 1.35);
+  dir.position.set(70, 62, -52);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(2048, 2048);
+  var cam = dir.shadow.camera;
+  cam.near = 1; cam.far = 260; cam.left=-95; cam.right=95; cam.top=95; cam.bottom=-95;
+  dir.shadow.bias = -0.0006; dir.shadow.normalBias = 0.03;
+  scene.add(dir); scene.add(dir.target);
+  rim = dir;
+
+  var fill = new THREE.DirectionalLight(0x9fc0ff, 0.32);
+  fill.position.set(-55, 30, 60); scene.add(fill);
+}
+
+/* ------------------------------------------------------------------ PALETA AO VIVO */
+window.__setPaleta = function(p){
+  palette = p;
+  document.documentElement.style.setProperty('--gold', p.base);
+  if(sky && sky.material.uniforms){
+    sky.material.uniforms.top.value.set(p.sky1);
+    sky.material.uniforms.bottom.value.set(p.sky2);
+    sky.material.uniforms.glowC.value.set(p.glow);
+  }
+  if(sun && sun.material) sun.material.color.set(p.sun);
+  if(sunHalo && sunHalo.material) sunHalo.material.color.set(p.sun);
+  if(rim && rim.color) rim.color.set(p.sun);
+  if(M.roof && M.roof.color) M.roof.color.set(0xffffff);
+  if(M.gold && M.gold.color) M.gold.color.set(p.base);
+  if(M.gold && M.gold.emissive) M.gold.emissive.set(p.glow);
+  if(M.glass && M.glass.emissive) M.glass.emissive.set(0xffffff);
+};
+
+/* ------------------------------------------------------------------ CÂMERA / WAYPOINTS */
+var waypoints = [
+  { p:[  0, 15, 70], t:[ 0, 22,  0], f:52 },   // 0 praça
+  { p:[  6, 12, 52], t:[ 0, 20,  0], f:50 },   // 1 avenida
+  { p:[ -4, 10, 38], t:[-6, 20,  6], f:48 },   // 2 olhar na torre
+  { p:[  0,  8, 28], t:[ 0, 10, 12], f:46 },   // 3 aproximando do portal
+  { p:[  0,  6.2,19], t:[ 0,  6,  6], f:52 },  // 4 portal
+  { p:[  0,  5.6, 9], t:[ 0,  5, -8], f:56 },  // 5 entrando
+  { p:[  0,  5.0, 0], t:[ 0,  5,-14], f:58 },  // 6 nave
+  { p:[  0,  4.6,-6], t:[ 0,  5,-16], f:52 },  // 7 corredor
+  { p:[  0,  4.2,-11],t:[ 0,  6,-18], f:46 },  // 8 altar
+  { p:[ -9,  9, 16], t:[ 0, 12,  0], f:50 },   // 9 lateral
+  { p:[ 17, 14, 26], t:[ 0, 14,  0], f:48 },   // 10 vista geral
+  { p:[  0, 30, 50], t:[ 0, 20,  0], f:54 },   // 11 aérea
+  { p:[  0, 12, 86], t:[ 0, 24,  0], f:56 }    // 12 horizonte
+];
+var camPos = new THREE.Vector3(waypoints[0].p[0], waypoints[0].p[1], waypoints[0].p[2]);
+var camTgt = new THREE.Vector3(waypoints[0].t[0], waypoints[0].t[1], waypoints[0].t[2]);
+var camFov  = waypoints[0].f;
+var scrollProg = 0;
+window.__nWaypoints = waypoints.length;
+
+function atualizaScroll(){
+  var doc = document.documentElement;
+  var max = (doc.scrollHeight - window.innerHeight) || 1;
+  scrollProg = Math.min(1, Math.max(0, window.scrollY / max));
+}
+window.addEventListener('scroll', atualizaScroll, {passive:true});
+window.addEventListener('resize', atualizaScroll);
+
+function samplePath(prog){
+  var n = waypoints.length - 1;
+  var f = prog * n, i = Math.min(n-1, Math.floor(f)), k = f - i;
+  var e = k<0.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2;   // easeInOutCubic
+  var a = waypoints[i], b = waypoints[i+1];
+  camPos.set(
+    a.p[0] + (b.p[0]-a.p[0])*e,
+    a.p[1] + (b.p[1]-a.p[1])*e,
+    a.p[2] + (b.p[2]-a.p[2])*e);
+  camTgt.set(
+    a.t[0] + (b.t[0]-a.t[0])*e,
+    a.t[1] + (b.t[1]-a.t[1])*e,
+    a.t[2] + (b.t[2]-a.t[2])*e);
+  camFov = a.f + (b.f-a.f)*e;
+}
+
+/* pular para um waypoint (tour guiado) */
+window.__waypoint = function(i){
+  var max = (document.documentElement.scrollHeight - window.innerHeight) || 1;
+  var prog = Math.min(1, i/(waypoints.length-1));
+  window.scrollTo({ top: prog*max, behavior:'smooth' });
+};
+
+/* ------------------------------------------------------------------ INTERAÇÃO (arrastar orbita) */
+var drag=false, lx=0, ly=0, orbX=0, orbY=0, orbTX=0, orbTY=0;
+function down(e){ var p=e.touches?e.touches[0]:e; drag=true; lx=p.clientX; ly=p.clientY; }
+function move(e){
+  if(!drag) return;
+  var p=e.touches?e.touches[0]:e;
+  orbTX += (p.clientX-lx)*0.0035;
+  orbTY = Math.max(-0.5, Math.min(0.7, orbTY + (p.clientY-ly)*0.0022));
+  lx=p.clientX; ly=p.clientY;
+  if(e.cancelable) e.preventDefault();
+}
+function up(){ drag=false; }
+container.addEventListener('mousedown', down);
+window.addEventListener('mousemove', move);
+window.addEventListener('mouseup', up);
+container.addEventListener('touchstart', down, {passive:true});
+container.addEventListener('touchmove', move, {passive:false});
+container.addEventListener('touchend', up);
+
+/* ------------------------------------------------------------------ INIT */
+function init(){
+  church = new THREE.Group();
+  palette = (D.PALETTES || D.PALETTAS)[0];
+  try{
+    renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false, powerPreference:'high-performance' });
+  }catch(err){ document.documentElement.classList.add('no3d'); return; }
+  if(!renderer.getContext()){ document.documentElement.classList.add('no3d'); return; }
+
+  var dpr = Math.min(window.devicePixelRatio||1, 2);
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0b1026, 90, 460);
+  clock = new THREE.Clock();
+
+  camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 1600);
+  camera.position.copy(camPos);
+
+  buildMaterials();
+  buildSky();
+  buildLights();
+  buildChurch();
+  buildAtmos();
+  window.__setPaleta(palette);
+
+  atualizaScroll();
+  window.addEventListener('resize', onResize);
+  onResize();
+
+  // esconde o loader
+  setTimeout(function(){
+    var l = document.getElementById('loader'); if(l) l.classList.add('is-off');
+  }, 500);
+
+  animate();
+}
+
+function onResize(){
+  if(!renderer) return;
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  atualizaScroll();
+}
+
+var t0 = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  var dt = clock.getDelta(), t = (t0 += dt);
+
+  // câmera
+  samplePath(scrollProg);
+  // orbit suave (arrastar)
+  orbX += (orbTX - orbX)*0.08;
+  orbY += (orbTY - orbY)*0.08;
+  var off = new THREE.Vector3(Math.sin(orbX)*14, orbY*22, Math.cos(orbX)*10);
+  var target = camPos.clone().add(off);
+  camera.position.lerp(target, 0.09);
+  camera.lookAt(camTgt);
+  if(Math.abs(camera.fov - camFov) > 0.01){ camera.fov += (camFov-camera.fov)*0.08; camera.updateProjectionMatrix(); }
+
+  // sol / nuvens
+  if(sunHalo) sunHalo.lookAt(camera.position);
+  clouds.forEach(function(c2){
+    c2.position.x += c2.userData.sp * dt * 6;
+    if(c2.position.x > 260) c2.position.x = -260;
+  });
+
+  // pombas
+  doves.forEach(function(b, i){
+    var u = b.userData;
+    u.a += u.sp * dt;
+    b.position.set(Math.cos(u.a)*u.r, u.y + Math.sin(u.a*2+i)*3.0, Math.sin(u.a)*u.r*0.8 - 6);
+    b.rotation.y = -u.a + Math.PI/2;
+    b.rotation.z = Math.sin(t*7+i)*0.32;
+    if(u.fl){ u.fl.rotation.x = -0.3 + Math.sin(t*11+i)*0.6; }
+    if(u.fr){ u.fr.rotation.x =  0.3 - Math.sin(t*11+i)*0.6; }
+  });
+
+  // motes sobem
+  if(motes){
+    var pos = motes.geometry.attributes.position.array;
+    for(var m=1;m<pos.length;m+=3){
+      pos[m] += dt*0.9;
+      if(pos[m] > 40) pos[m] = 0;
+    }
+    motes.geometry.attributes.position.needsUpdate = true;
+    motes.rotation.y = t*0.01;
+  }
+
+  // feixes de luz respirando
+  shafts.forEach(function(s,i){ s.material.opacity = 0.07 + Math.sin(t*0.7+i)*0.035; });
+
+  // véu do céu acompanha a câmera
+  if(sky) sky.position.copy(camera.position);
+
+  renderer.render(scene, camera);
+}
+
+/* aguarda o Three.js (com fallback do CDN) */
+function waitThree(tries){
+  if(window.THREE && window.THREE.WebGLRenderer){ init(); return; }
+  if(tries > 40){ document.documentElement.classList.add('no3d');
+    var l=document.getElementById('loader'); if(l) l.classList.add('is-off'); return; }
+  setTimeout(function(){ waitThree(tries+1); }, 120);
+}
+window.addEventListener('three-fail', function(){
+  document.documentElement.classList.add('no3d');
+  var l=document.getElementById('loader'); if(l) l.classList.add('is-off');
+});
+waitThree(0);
+
+})();
+</script>
+</body>
+</html>

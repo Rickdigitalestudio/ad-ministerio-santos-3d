@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nossas Igrejas &amp; Congregações · AD Santos — A Pioneira</title>
+<meta name="description" content="Conheça a sede e as congregações da Assembleia de Deus Ministério de Santos: endereços, contatos, história, pastores, ministérios e mapa interativo de toda a Baixada Santista e Litoral Norte.">
+<meta name="theme-color" content="#070a16">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/base.css">
+<style>
+/* fundo estático (a maquete 3D fica na home) */
+body::before{content:'';position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(90% 60% at 78% 4%,rgba(255,220,150,.10),transparent 55%),
+    radial-gradient(70% 55% at 10% 100%,rgba(92,200,255,.08),transparent 60%),
+    linear-gradient(180deg,#141d3d,#05070f 60%)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:34px 34px}
+
+/* hero */
+.gh{padding:128px 0 46px;position:relative}
+.gh h1{max-width:20ch;margin:16px 0 0}
+.gh__sub{max-width:60ch;margin-top:16px;font-size:clamp(15px,1.6vw,18px);color:#e6e1d4;
+  text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.gh__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:30px}
+@media (max-width:760px){.gh__stats{grid-template-columns:repeat(2,1fr)}}
+
+/* layout principal */
+.igj{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media (max-width:1000px){.igj{grid-template-columns:1fr}}
+
+/* coluna lateral: busca + lista */
+.side{position:sticky;top:88px}
+@media (max-width:1000px){.side{position:static}}
+.busca{display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:12px;
+  background:rgba(4,6,14,.6);border:1px solid var(--line);margin-bottom:14px}
+.busca svg{flex:none;color:var(--muted)}
+.busca input{flex:1;background:none;border:0;outline:none;color:var(--ink);font-size:14.5px;font-family:var(--f-body)}
+.busca input::placeholder{color:var(--muted2)}
+.filtros{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.fil{padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;
+  border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);transition:.2s}
+.fil:hover{color:var(--ink);border-color:rgba(255,255,255,.3)}
+.fil[aria-pressed="true"]{background:var(--gold);color:#0b0f22;border-color:transparent}
+.lig{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 13px;
+  border-radius:12px;background:var(--card);border:1px solid var(--line-soft);cursor:pointer;
+  transition:.2s;margin-bottom:8px}
+.lig:hover{background:var(--card-hover);border-color:rgba(233,181,74,.4);transform:translateX(3px)}
+.lig.is-on{background:linear-gradient(150deg,rgba(233,181,74,.2),rgba(16,21,42,.95));border-color:var(--gold)}
+.lig__dot{width:11px;height:11px;border-radius:50%;flex:none;background:#5cc8ff;box-shadow:0 0 0 4px rgba(92,200,255,.16)}
+.lig--sede .lig__dot{background:var(--gold2);box-shadow:0 0 0 5px rgba(233,181,74,.26);width:13px;height:13px}
+.lig__n{font-weight:700;font-size:14.2px;line-height:1.25}
+.lig__c{font-size:11.8px;color:var(--muted)}
+.lig__t{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.09em;padding:3px 7px;
+  border-radius:999px;background:rgba(233,181,74,.16);color:var(--gold2);text-transform:uppercase;flex:none}
+.vazio{padding:20px;text-align:center;color:var(--muted);font-size:13.5px}
+
+/* mapa grande */
+.gmap{height:420px;border-radius:var(--r)}
+@media (max-width:1000px){.gmap{height:320px}}
+
+/* painel de perfil completo */
+.perfil{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+  background:linear-gradient(158deg,rgba(18,23,48,.96),rgba(8,11,24,.96));
+  box-shadow:0 40px 100px -50px #000}
+.perfil__hd{position:relative;padding:0}
+.perfil__foto{aspect-ratio:21/8;overflow:hidden;background:#0a0f22}
+.perfil__foto img{width:100%;height:100%;object-fit:cover}
+.perfil__grad{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(6,9,20,.15),rgba(6,9,20,.96))}
+.perfil__tag{position:absolute;top:14px;left:14px;z-index:2}
+.perfil__titulo{position:absolute;left:20px;right:20px;bottom:16px;z-index:2}
+.perfil__titulo h2{font-size:clamp(21px,3.2vw,32px);text-shadow:0 3px 20px rgba(0,0,0,.8)}
+.perfil__titulo p{margin:3px 0 0;font-size:13.5px;color:#d9d3c4}
+.perfil__b{padding:22px}
+
+/* chips de dados-chave */
+.chaves{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+@media (max-width:820px){.chaves{grid-template-columns:repeat(2,1fr)}}
+.chave{padding:13px 14px;border-radius:12px;background:rgba(255,255,255,.045);
+  border:1px solid var(--line-soft)}
+.chave__k{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
+.chave__v{font-family:var(--f-display);font-weight:700;font-size:15px;margin-top:4px;line-height:1.3}
+.chave__v small{display:block;font-family:var(--f-body);font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* seções do perfil */
+.psec{margin-top:22px;padding-top:22px;border-top:1px solid var(--line-soft)}
+.psec:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.psec__h{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.psec__h svg{color:var(--gold2);flex:none}
+.psec__h b{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.psec p{color:#ded8c9;font-size:14.4px;line-height:1.76;margin-bottom:.9em}
+.psec p:last-child{margin-bottom:0}
+
+/* lista de pastores (sucessão) */
+.pastores{display:grid;gap:8px}
+.pas{display:grid;grid-template-columns:66px 1fr;gap:14px;align-items:baseline;
+  padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid var(--line-soft)}
+.pas:hover{background:rgba(255,255,255,.06);border-color:rgba(233,181,74,.3)}
+.pas__a{font-family:var(--f-display);font-weight:700;color:var(--gold2);font-size:14.5px}
+.pas__n{font-weight:700;font-size:14.3px}
+
+/* diretoria */
+.dir{display:grid;gap:8px}
+.dir__r{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;
+  background:rgba(255,255,255,.035);border:1px solid var(--line-soft)}
+.dir__av{width:36px;height:36px;flex:none;border-radius:10px;display:grid;place-items:center;
+  font-family:var(--f-display);font-weight:700;font-size:14px;color:#0b0f22;
+  background:linear-gradient(150deg,var(--gold2),var(--gold))}
+.dir__n{font-weight:700;font-size:14.2px}
+.dir__c{font-size:12px;color:var(--muted)}
+
+/* ministérios */
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:820px){.minis{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.minis{grid-template-columns:1fr}}
+.mini{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line-soft);font-size:13.4px;font-weight:600}
+.mini svg{color:var(--gold2);flex:none}
+
+/* pioneiros */
+.pio{display:flex;flex-wrap:wrap;gap:8px}
+
+/* cta */
+.pcta{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;padding-top:20px;border-top:1px solid var(--line-soft)}
+
+/* nota */
+.rodape-nota{margin-top:26px}
+
+/* animação de troca */
+.swap{animation:swapIn .38s ease}
+@keyframes swapIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="topo is-solid" id="topo">
+  <a class="marca" href="index.html">
+    <span class="marca__ico" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M6 7h12M9 12h6M10 16h4"/></svg>
+    </span>
+    <span class="marca__tx">
+      <span class="marca__nome">AD Santos — A Pioneira</span>
+      <span class="marca__sub">Nossas Igrejas &amp; Congregações</span>
+    </span>
+  </a>
+  <nav class="nav" aria-label="Navegação">
+    <a href="index.html">Início</a>
+    <a href="index.html#historia">Trajetória</a>
+    <a href="index.html#lideres">Líderes</a>
+    <a href="index.html#cultos">Cultos</a>
+    <a href="#mapa" aria-current="true">Nossas Igrejas</a>
+  </nav>
+  <a class="btn btn--gold btn--sm" href="index.html#visite">Dízimo &amp; Oferta</a>
+  <a class="btn btn--sm" href="index.html">← Voltar</a>
+</header>
+
+<main style="pointer-events:auto">
+
+  <!-- ==================================================== HERO -->
+  <section class="gh">
+    <div class="wrap">
+      <div class="eyebrow">Assembleia de Deus · Ministério de Santos</div>
+      <h1>Uma obra, <span class="grad">muitas casas</span>.</h1>
+      <p class="gh__sub">
+        Da sede da Rua Dr. Manoel Tourinho às congregações espalhadas por
+        <b>Santos, São Vicente, Praia Grande, Guarujá, Mongaguá, Itanhaém</b> e o
+        <b>Litoral Norte</b> — São Sebastião, Caraguatatuba e Ubatuba. Clique num ponto do
+        mapa ou escolha uma igreja ao lado: endereço, telefone, WhatsApp, e-mail,
+        história, pastores e ministérios mudam na hora.
+      </p>
+      <div class="gh__stats" id="ghStats"></div>
+    </div>
+  </section>
+
+  <!-- ==================================================== MAPA + LISTA -->
+  <section class="sec" id="mapa" style="padding-top:0">
+    <div class="wrap">
+      <div class="panel">
+        <div class="igj">
+          <!-- coluna lateral -->
+          <aside class="side">
+            <div class="eyebrow" style="margin-bottom:12px">Escolha uma igreja</div>
+            <div class="busca">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              <input id="busca" type="search" placeholder="Buscar por nome ou cidade…" aria-label="Buscar igreja">
+            </div>
+            <div class="filtros" id="filtros" role="group" aria-label="Filtrar igrejas"></div>
+            <div id="lista" role="listbox" aria-label="Igrejas e congregações"></div>
+          </aside>
+
+          <!-- coluna principal -->
+          <div>
+            <div class="adms-mapa gmap" id="gmap" role="img"
+                 aria-label="Mapa das igrejas e congregações da Assembleia de Deus Ministério de Santos"></div>
+
+            <!-- perfil completo -->
+            <article class="perfil" id="perfil" style="margin-top:18px" aria-live="polite"></article>
+
+            <div class="rodape-nota">
+              <div class="aviso">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                <span>Perfil construído a partir de <b>fontes públicas</b> (redes sociais oficiais,
+                  imprensa e registros históricos). Confirme horários, contatos e a programação
+                  diretamente com a igreja. Edite qualquer dado em <code>js/dados.js</code>.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== MAPA DA EXPANSÃO -->
+  <section class="sec sec--glass" id="expansao">
+    <div class="wrap">
+      <div class="panel">
+        <div class="sec__head">
+          <div class="eyebrow">O mapa da expansão</div>
+          <h2>De uma casa no Ponta da Praia<br>a todo o litoral</h2>
+          <p class="lead">Em 1924 o primeiro culto aconteceu no bairro <b>Ponta da Praia</b>.
+            Em 1929 a pregação já alcançava todos os bairros de Santos e, em cinco anos,
+            as cidades do litoral norte. Veja os pontos históricos que marcam essa caminhada.</p>
+        </div>
+        <div class="adms-mapa" id="expMap" style="height:460px" role="img"
+             aria-label="Mapa da expansão histórica da Assembleia de Deus pelo litoral paulista"></div>
+        <div class="grid g3" style="margin-top:18px" id="expLegenda"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="rodape">
+  <div class="wrap">
+    <div class="rodape__cols">
+      <div>
+        <div class="marca" style="margin-bottom:14px">
+          <span class="marca__ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M6 7h12M9 12h6M10 16h4"/></svg>
+          </span>
+          <span class="marca__tx">
+            <span class="marca__nome">AD Santos — A Pioneira</span>
+            <span class="marca__sub">Assembleia de Deus · Ministério de Santos</span>
+          </span>
+        </div>
+        <p class="muted" style="font-size:13.5px;max-width:38ch">
+          A primeira Assembleia de Deus do Estado de São Paulo, fundada em 5 de maio de 1924
+          pelo missionário sueco Daniel Berg.
+        </p>
+      </div>
+      <div>
+        <h4>Navegue</h4>
+        <ul>
+          <li><a href="index.html">Início</a></li>
+          <li><a href="index.html#historia">Nossa trajetória</a></li>
+          <li><a href="index.html#lideres">Nossos líderes</a></li>
+          <li><a href="index.html#cultos">Cultos</a></li>
+          <li><a href="#mapa">Nossas Igrejas</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contato da sede</h4>
+        <ul id="rdContato"></ul>
+      </div>
+      <div>
+        <h4>Redes &amp; rádio</h4>
+        <ul id="rdRedes"></ul>
+      </div>
+    </div>
+    <div class="rodape__legal">
+      <span>© <span id="ano"></span> Igreja Evangélica Assembleia de Deus — Ministério de Santos.</span>
+      <span id="rdCred"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/shared.js"></script>
+<script>
+(function(){
+'use strict';
+var D = window.ADMS, U = window.ADMSUI, C = D.CONFIG;
+var $  = function(s,r){return (r||document).querySelector(s);};
+var $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+
+/* ------------------------------------------------------------- stats do hero */
+(function(){
+  var w = $('#ghStats');
+  var stats = [
+    {n:1924, s:'', l:'Fundação da sede', t:'Missionário Daniel Berg'},
+    {n:D.IGREJAS.length, s:'', l:'Casas de oração', t:'Sede + congregações'},
+    {n:10, s:'', l:'Cidades alcançadas', t:'Baixada Santista + Litoral Norte'},
+    {n:100, s:'+', l:'Anos de história', t:'Centenária desde 2024'}
+  ];
+  stats.forEach(function(s,i){
+    var d = document.createElement('div'); d.className='stat';
+    d.innerHTML = '<div class="stat__n">'+s.n+(s.s||'')+'</div>'+
+      '<div class="stat__l">'+U.esc(s.l)+'</div><div class="stat__t">'+U.esc(s.t)+'</div>';
+    w.appendChild(d);
+  });
+})();
+
+/* ------------------------------------------------------------- MAPA PRINCIPAL */
+var IG = D.IGREJAS;
+var mapa = U.criarMapa($('#gmap'), {
+  pontos: IG.map(function(g){ return {id:g.id, nome:g.nome, lat:g.lat, lng:g.lng, tipo:g.tipo}; }),
+  center:[C.lat, C.lng], zoom:10
+});
+
+/* ------------------------------------------------------------- LISTA + FILTROS */
+var filtro = 'todas', busca = '';
+var listaEl = $('#lista'), perfilEl = $('#perfil');
+
+(function(){
+  var f = $('#filtros');
+  [['todas','Todas'],['sede','Sede'],['congregacao','Congregações']].forEach(function(x,i){
+    var b = document.createElement('button'); b.type='button'; b.className='fil';
+    b.textContent = x[1]; b.setAttribute('aria-pressed', i===0?'true':'false');
+    b.addEventListener('click', function(){
+      filtro = x[0];
+      $$('.fil', f).forEach(function(o){o.setAttribute('aria-pressed','false');});
+      b.setAttribute('aria-pressed','true');
+      renderLista();
+    });
+    f.appendChild(b);
+  });
+})();
+
+$('#busca').addEventListener('input', function(e){
+  busca = e.target.value.toLowerCase().trim(); renderLista();
+});
+
+function filtradas(){
+  return IG.filter(function(g){
+    if(filtro!=='todas' && g.tipo!==filtro) return false;
+    if(!busca) return true;
+    var alvo = (g.nome+' '+(g.apelido||'')+' '+g.cidade+' '+(g.bairro||'')+' '+(g.endereco||'')).toLowerCase();
+    return alvo.indexOf(busca) > -1;
+  });
+}
+
+function renderLista(){
+  var ls = filtradas();
+  listaEl.innerHTML = '';
+  if(!ls.length){
+    listaEl.innerHTML = '<div class="vazio">Nenhuma igreja encontrada para “'+U.esc(busca)+'”.</div>';
+    return;
+  }
+  ls.forEach(function(g){
+    var b = document.createElement('button'); b.type='button';
+    b.className = 'lig' + (g.tipo==='sede'?' lig--sede':'') + (g.id===selAtual?' is-on':'');
+    b.setAttribute('role','option');
+    b.dataset.id = g.id;
+    b.innerHTML = '<span class="lig__dot"></span><span><span class="lig__n">'+U.esc(g.nome)+
+      '</span><br><span class="lig__c">'+U.esc(g.bairro)+' · '+U.esc(g.cidade)+'/'+U.esc(g.uf)+'</span></span>'+
+      (g.tipo==='sede'?'<span class="lig__t">Sede</span>':'');
+    b.addEventListener('click', function(){ selecionar(g.id, true); });
+    listaEl.appendChild(b);
+  });
+}
+
+/* ------------------------------------------------------------- PERFIL COMPLETO */
+var selAtual = 'sede';
+
+function iniciais(nome){
+  var p = String(nome||'').replace(/^(Pr\.|Pastora|Pastor|Dep\.|Missionário|Presbítero)\s*/i,'')
+          .split(/\s+/).filter(Boolean);
+  return ((p[0]||'')[0]||'') + ((p[1]||'')[0]||'');
+}
+
+function selecionar(id, pan){
+  var g = IG.filter(function(x){return x.id===id;})[0]; if(!g) return;
+  selAtual = id;
+
+  $$('.lig', listaEl).forEach(function(el){ el.classList.toggle('is-on', el.dataset.id===id); });
+  if(mapa.setAtivo) mapa.setAtivo(id);
+  if(pan && mapa.map) try{ mapa.map.setView([g.lat,g.lng], Math.max(12, mapa.map.getZoom()), {animate:true}); }catch(e){}
+
+  /* --- cabeçalho do perfil --- */
+  var fotoWrap = '<div class="perfil__foto" id="pfFoto"></div><div class="perfil__grad"></div>';
+  var head =
+    '<div class="perfil__hd">'+
+      fotoWrap+
+      '<span class="badge perfil__tag'+(g.tipo==='sede'?'':' badge--ok')+'">'+
+        (g.tipo==='sede'?'★ Igreja Sede':'Congregação')+'</span>'+
+      '<div class="perfil__titulo">'+
+        '<h2>'+U.esc(g.nome)+'</h2>'+
+        '<p>'+U.esc(g.apelido||'')+' · '+U.esc(g.bairro)+' — '+U.esc(g.cidade)+'/'+U.esc(g.uf)+'</p>'+
+      '</div>'+
+    '</div>';
+
+  /* --- chaves rápidas --- */
+  var chaves =
+    '<div class="chaves">'+
+      '<div class="chave"><div class="chave__k">Fundada</div><div class="chave__v">'+U.esc(g.fundada)+
+        '<small>'+U.esc(g.inauguracao||'')+'</small></div></div>'+
+      '<div class="chave"><div class="chave__k">Capacidade</div><div class="chave__v">'+U.esc(g.capacidade||'—')+'</div></div>'+
+      '<div class="chave"><div class="chave__k">Telefone</div><div class="chave__v"><a href="'+U.telHref(g.telefone)+'">'+U.esc(g.telefone)+'</a></div></div>'+
+      '<div class="chave"><div class="chave__k">E-mail</div><div class="chave__v" style="font-size:12.5px;word-break:break-all"><a href="mailto:'+U.esc(g.email)+'">'+U.esc(g.email)+'</a></div></div>'+
+    '</div>';
+
+  /* --- seções --- */
+  var s = '';
+
+  // endereço + contatos
+  s +=
+    '<div class="psec">'+
+      '<div class="psec__h">'+U.icon('pin',17)+'<b>Endereço &amp; contato</b></div>'+
+      '<div class="ct">'+
+        '<div class="ct__r">'+U.icon('pin',17)+'<span>'+U.esc(g.endereco)+' — '+U.esc(g.cidade)+'/'+U.esc(g.uf)+
+          (g.cep?' · CEP '+U.esc(g.cep):'')+'</span></div>'+
+        '<div class="ct__r">'+U.icon('phone',17)+'<a href="'+U.telHref(g.telefone)+'">'+U.esc(g.telefone)+'</a></div>'+
+        '<div class="ct__r">'+U.icon('mail',17)+'<a href="mailto:'+U.esc(g.email)+'">'+U.esc(g.email)+'</a></div>'+
+        (g.instagram?'<div class="ct__r">'+U.icon('external',17)+'<a href="'+g.instagram+'" target="_blank" rel="noopener">Redes sociais da igreja</a></div>':'')+
+      '</div>'+
+    '</div>';
+
+  // descrição detalhada
+  s +=
+    '<div class="psec">'+
+      '<div class="psec__h">'+U.icon('flame',17)+'<b>Sobre esta igreja</b></div>'+
+      (g.descricao||[]).map(function(p){return '<p>'+U.esc(p)+'</p>';}).join('')+
+    '</div>';
+
+  // história + inauguração
+  if(g.historia){
+    s +=
+      '<div class="psec">'+
+        '<div class="psec__h">'+U.icon('book',17)+'<b>História &amp; inauguração</b></div>'+
+        '<p><b>'+U.esc(g.fundada)+'</b> — '+U.esc(g.inauguracao||'')+'</p>'+
+        '<p>'+U.esc(g.historia)+'</p>'+
+      '</div>';
+  }
+
+  // pioneiros
+  if(g.pioneiros && g.pioneiros.length){
+    s +=
+      '<div class="psec">'+
+        '<div class="psec__h">'+U.icon('star',17)+'<b>Pioneiros</b></div>'+
+        '<div class="pio">'+ g.pioneiros.map(function(p){return '<span class="chip">'+U.esc(p)+'</span>';}).join('') +'</div>'+
+      '</div>';
+  }
+
+  // sucessão de pastores
+  if(g.pastores && g.pastores.length){
+    s +=
+      '<div class="psec">'+
+        '<div class="psec__h">'+U.icon('shield',17)+'<b>Pastores que passaram pela casa</b></div>'+
+        '<div class="pastores">'+ g.pastores.map(function(p){
+          return '<div class="pas"><span class="pas__a">'+U.esc(p.ano)+'</span>'+
+                 '<span class="pas__n">'+U.esc(p.nome)+'</span></div>';
+        }).join('') +'</div>'+
+      '</div>';
+  }
+
+  // diretoria
+  if(g.diretoria && g.diretoria.length){
+    s +=
+      '<div class="psec">'+
+        '<div class="psec__h">'+U.icon('users',17)+'<b>Diretoria</b></div>'+
+        '<div class="dir">'+ g.diretoria.map(function(d){
+          return '<div class="dir__r"><span class="dir__av">'+U.esc(iniciais(d.nome).toUpperCase())+'</span>'+
+                 '<span><span class="dir__n">'+U.esc(d.nome)+'</span><br><span class="dir__c">'+U.esc(d.cargo)+'</span></span></div>';
+        }).join('') +'</div>'+
+      '</div>';
+  }
+
+  // ministérios
+  if(g.ministerios && g.ministerios.length){
+    var mapaIco = {'Adoração e Louvor':'music','Escola Bíblica':'book','Jovens & Conexão':'users',
+      'Família':'heart','Missões':'globe','Infância & Kids':'smile','Obreiros e Diaconia':'shield',
+      'Ação Social':'handshake','Comunicação':'radio','Intercessão':'flame'};
+    s +=
+      '<div class="psec">'+
+        '<div class="psec__h">'+U.icon('music',17)+'<b>Ministérios</b></div>'+
+        '<div class="minis">'+ g.ministerios.map(function(m){
+          return '<span class="mini">'+U.icon(mapaIco[m]||'sparkle',16)+U.esc(m)+'</span>';
+        }).join('') +'</div>'+
+      '</div>';
+  }
+
+  // cta
+  s +=
+    '<div class="pcta">'+
+      '<a class="btn btn--gold" href="'+U.zapHref(g.whatsapp,'Olá! Vim pelo site da AD Santos — '+g.nome+'. Gostaria de saber mais.')+'" target="_blank" rel="noopener">'+
+        U.icon('phone',15)+' WhatsApp</a>'+
+      '<a class="btn" href="'+U.mapsHref(g.mapsQuery||g.endereco)+'" target="_blank" rel="noopener">'+U.icon('pin',15)+' Como chegar</a>'+
+      '<a class="btn" href="'+U.telHref(g.telefone)+'">'+U.icon('phone',15)+' Ligar</a>'+
+      '<a class="btn" href="mailto:'+U.esc(g.email)+'">'+U.icon('mail',15)+' E-mail</a>'+
+    '</div>';
+
+  perfilEl.innerHTML = head + '<div class="perfil__b">' + chaves + s + '</div>';
+  perfilEl.classList.remove('swap'); void perfilEl.offsetWidth; perfilEl.classList.add('swap');
+
+  // foto com fallback
+  var fw = $('#pfFoto', perfilEl);
+  if(fw) fw.appendChild(U.img(g.foto, g.nome, g.cidade+'/'+g.uf, g.cor||'#e9b54a'));
+}
+
+/* cliques nos marcadores do Leaflet */
+IG.forEach(function(g){
+  var mk = mapa.marks && mapa.marks[g.id];
+  if(mk) mk.on('click', function(){ selecionar(g.id, false); });
+});
+
+renderLista();
+selecionar('sede', false);
+if(mapa.map) try{ mapa.map.setView([C.lat, C.lng], 10); }catch(e){}
+
+/* ------------------------------------------------------------- MAPA DA EXPANSÃO */
+(function(){
+  var el = $('#expMap'); if(!el) return;
+  var m = U.criarMapa(el, {
+    pontos: D.EXPANSAO.map(function(p){ return {id:p.id, nome:p.nome, lat:p.lat, lng:p.lng, tipo:p.tipo}; }),
+    center:[-23.80,-45.55], zoom:9
+  });
+  if(m.map){
+    try{
+      var linhas = D.EXPANSAO.filter(function(p){return p.ano===1924 || p.ano===1929;});
+      L.polyline(linhas.map(function(p){return [p.lat,p.lng];}),
+        {color:'#e9b54a', weight:2.5, opacity:.8, dashArray:'6 8'}).addTo(m.map);
+      var b = L.latLngBounds(D.EXPANSAO.map(function(p){return [p.lat,p.lng];}));
+      m.map.fitBounds(b.pad(0.14));
+    }catch(e){}
+  }
+  var leg = $('#expLegenda');
+  [
+    {t:'1924 — Ponta da Praia', d:'O missionário Daniel Berg realiza o primeiro culto no bairro Ponta da Praia e planta a primeira AD do Estado de São Paulo.'},
+    {t:'1929 — Todos os bairros', d:'A pregação já alcançava todos os bairros de Santos; casas cedidas viraram pontos de pregação e, depois, congregações.'},
+    {t:'1934 — Macuco', d:'A obra se fixa legalmente à Rua Dr. Manoel Tourinho, 351, no bairro Macuco — endereço da sede até hoje.'}
+  ].forEach(function(x,i){
+    var d = document.createElement('div'); d.className='card';
+    d.innerHTML = '<h3 style="font-size:16px;margin-bottom:6px">'+U.esc(x.t)+'</h3><p>'+U.esc(x.d)+'</p>';
+    leg.appendChild(d);
+  });
+})();
+
+/* ------------------------------------------------------------- rodapé */
+(function(){
+  var rc = $('#rdContato');
+  [['Endereço', C.endereco+' — '+C.cidade+'/'+C.uf],
+   ['CEP', C.cep], ['Telefone', C.telefone], ['E-mail', C.email]].forEach(function(p){
+    var li = document.createElement('li'); li.innerHTML = '<b style="color:#f2ede1">'+p[0]+':</b> '+U.esc(p[1]); rc.appendChild(li);
+  });
+  var rr = $('#rdRedes');
+  [['Instagram', C.instagram], ['Facebook', C.facebook], ['YouTube', C.youtube],
+   ['Fly 99 FM', C.radio.site], ['Início', 'index.html']].forEach(function(p){
+    var li = document.createElement('li'); li.innerHTML = '<a href="'+p[1]+'" target="_blank" rel="noopener">'+p[0]+'</a>'; rr.appendChild(li);
+  });
+  $('#ano').textContent = new Date().getFullYear();
+  $('#rdCred').textContent = D.CREDITO_FOTOS;
+})();
+
+})();
+</script>
+</body>
+</html>
